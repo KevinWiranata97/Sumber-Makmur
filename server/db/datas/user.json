@@ -1,0 +1,14 @@
+[
+    {
+        "name": "John Doe",
+        "email": "test@mail.com",
+        "password": "test",
+        "role": "admin"
+    },
+    {
+        "name": "Admin",
+        "email": "admin@voltest.com",
+        "password": "admin!123",
+        "role": "admin"
+    }
+]
