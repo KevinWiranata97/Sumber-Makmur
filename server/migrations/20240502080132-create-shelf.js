@@ -24,17 +24,16 @@ module.exports = {
         onUpdate: 'cascade',
         onDelete: 'cascade'
       },
+      status: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue:true
+      },
       createdBy: {
         type: Sequelize.STRING
       },
       updatedBy: {
         type: Sequelize.STRING
-      },
-      updated_at: {
-        type: Sequelize.DATE
-      },
-      created_at: {
-        type: Sequelize.DATE
       },
       createdAt: {
         allowNull: false,
@@ -44,6 +43,7 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE
       }
+ 
     });
   },
   async down(queryInterface, Sequelize) {

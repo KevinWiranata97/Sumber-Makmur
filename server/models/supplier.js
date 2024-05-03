@@ -21,6 +21,7 @@ module.exports = (sequelize, DataTypes) => {
     fax: DataTypes.STRING,
     website: DataTypes.STRING,
     NPWP: DataTypes.STRING,
+    status: DataTypes.BOOLEAN,
     createdBy: DataTypes.STRING,
     updatedBy: DataTypes.STRING,
     updated_at: DataTypes.DATE,

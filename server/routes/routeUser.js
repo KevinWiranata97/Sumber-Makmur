@@ -8,7 +8,7 @@ router.use(authentication)
 router.get('/', Controller.getUser)
 router.get('/:id', Controller.getUserById)
 
-router.delete('/:id',authorization, Controller.deleteUser)
+router.delete('/:id', Controller.deleteUser)
 
 
 

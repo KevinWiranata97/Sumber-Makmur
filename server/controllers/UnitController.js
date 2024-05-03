@@ -1,15 +1,15 @@
-const { User } = require("../models");
+const { Unit } = require("../models");
 const { comparePassword } = require("../helpers/bcrypt");
 const { generateToken } = require("../helpers/jwt");
 class Controller {
   static async getUser(req, res, next) {
     try {
-      const user = await User.findAll({
+      const Unit = await Unit.findAll({
         where: {
           status: true,
         },
       });
-      res.status(200).json(user);
+      res.status(200).json(Unit);
     } catch (error) {
       next(error);
     }
@@ -17,15 +17,14 @@ class Controller {
 
   static async createUser(req, res, next) {
     try {
-      const { username, password, role } = req.body;
+      const { unit_name, unit_code } = req.body;
 
       const data = {
-        username,
-        password,
-        role,
+        unit_name,
+        unit_code,
       };
 
-      await User.create(data);
+      await Unit.create(data);
       res.status(201).json({
         error: false,
         msg: `Success`,
@@ -39,24 +38,24 @@ class Controller {
   static async getUserById(req, res, next) {
     try {
       const { id } = req.params;
-      const user = await User.findOne({
+      const Unit = await Unit.findOne({
         where: {
           id,
           status: true,
         },
       });
-      if (!user) {
+      if (!Unit) {
         throw {
           name: "not_found",
           code: 404,
-          msg: "User not found",
+          msg: "Unit not found",
         };
       }
 
       res.status(200).json({
         error: false,
         msg: `Success`,
-        data: user,
+        data: Unit,
       });
     } catch (error) {
       next(error);
@@ -66,12 +65,12 @@ class Controller {
   static async deleteUser(req, res, next) {
     try {
       const { id } = req.params;
-      const user = await User.findOne({
+      const Unit = await Unit.findOne({
         where: {
           id,
         },
       });
-      if (!user) {
+      if (!Unit) {
         throw {
           name: "Unauthorized",
           code: 401,
@@ -81,7 +80,7 @@ class Controller {
       const data = {
         status: false,
       };
-      await user.update(data, {
+      await Unit.update(data, {
         where: {
           id,
         },
@@ -100,7 +99,7 @@ class Controller {
     try {
       const { username, password } = req.body;
 
-      let findUser = await User.findOne({
+      let findUser = await Unit.findOne({
         where: {
           username,
         },

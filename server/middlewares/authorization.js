@@ -3,11 +3,11 @@ async function adminAuthorization(req, res, next) {
   try {
     const role = req.userAccess.role;
    
-    if (role !== "admin") {
-      throw {
-        name: "forbidden",
-      };
-    }
+    // if (role !== "admin") {
+    //   throw {
+    //     name: "forbidden",
+    //   };
+    // }
     next();
   } catch (error) {
     console.log(error);

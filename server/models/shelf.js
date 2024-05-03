@@ -17,6 +17,7 @@ module.exports = (sequelize, DataTypes) => {
     shelf_name: DataTypes.STRING,
     shelf_code: DataTypes.STRING,
     storage_id: DataTypes.INTEGER,
+    status: DataTypes.BOOLEAN,
     createdBy: DataTypes.STRING,
     updatedBy: DataTypes.STRING,
     updated_at: DataTypes.DATE,

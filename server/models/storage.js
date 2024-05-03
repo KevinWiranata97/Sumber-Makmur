@@ -3,7 +3,7 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Location extends Model {
+  class Storage extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -16,6 +16,7 @@ module.exports = (sequelize, DataTypes) => {
   Storage.init({
     storage_name: DataTypes.STRING,
     storage_code: DataTypes.STRING,
+    status: DataTypes.BOOLEAN,
     createdBy: DataTypes.STRING,
     updatedBy: DataTypes.STRING,
     updated_at: DataTypes.DATE,

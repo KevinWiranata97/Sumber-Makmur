@@ -2,6 +2,7 @@
 const {
   Model
 } = require('sequelize');
+const { hashpassword } = require('../helpers/bcrypt');
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     /**
@@ -14,16 +15,22 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   User.init({
-    userame: DataTypes.STRING,
+    username: {
+      type: DataTypes.STRING,
+      unique: true // Make username unique
+    },
     password: DataTypes.STRING,
-    email: DataTypes.STRING,
-    createdBy: DataTypes.STRING,
+    role_id: DataTypes.INTEGER,
+    status: DataTypes.BOOLEAN,
     updatedBy: DataTypes.STRING,
-    updated_at: DataTypes.DATE,
-    created_at: DataTypes.DATE
+    createdBy: DataTypes.STRING
   }, {
     sequelize,
     modelName: 'User',
   });
+
+  User.beforeCreate((instance, options) => {
+    instance.password = hashpassword(instance.password)
+  })
   return User;
 };

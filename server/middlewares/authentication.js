@@ -1,23 +1,30 @@
-const User = require("../models/user");
+const {User} = require("../models");
 const { verifyToken } = require("../helpers/jwt");
 
 async function authentication(req, res, next) {
   try {
-    const { access_token } = req.headers;
-    if (!access_token) {
+    const {authorization } = req.headers;
+
+    if (!authorization) {
       throw {
         name: "Unauthorized",
+        code:401,
+        msg:"Invalid email/password"
       };
     }
 
-    const payload = verifyToken(access_token);
-    const findUser = await User.query().findOne({
+    const payload = verifyToken(authorization);
+    const findUser = await User.findOne({
+     where:{
       id: payload.id,
+     } 
     });
 
     if (!findUser) {
       throw {
         name: "Unauthorized",
+        code:401,
+        msg:"Invalid email/password"
       };
     }
 
@@ -30,11 +37,7 @@ async function authentication(req, res, next) {
 
     next();
   } catch (error) {
-    if (error.name === "Unauthorized") {
-      res.status(401).json({ message: "Invalid email or password" });
-    } else {
-      res.status(500).json({ message: "internal server error" });
-    }
+    next(error)
   }
 }
 

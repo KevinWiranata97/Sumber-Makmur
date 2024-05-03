@@ -16,6 +16,7 @@ module.exports = (sequelize, DataTypes) => {
   Unit.init({
     unit_name: DataTypes.STRING,
     unit_code: DataTypes.STRING,
+    status: DataTypes.BOOLEAN,
     createdBy: DataTypes.STRING,
     updatedBy: DataTypes.STRING,
     updated_at: DataTypes.DATE,
