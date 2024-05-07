@@ -1,30 +1,30 @@
-const { Unit } = require("../models");
+const {Shelf, Storage } = require("../models");
 const { comparePassword } = require("../helpers/bcrypt");
 const { generateToken } = require("../helpers/jwt");
 class Controller {
-  static async getUnit(req, res, next) {
+  static async getShelf(req, res, next) {
     try {
-      const unit = await Unit.findAll({
+      const shelves = await Shelf.findAll({
         where: {
           status: true,
         },
       });
-      res.status(200).json(unit);
+      res.status(200).json(shelves);
     } catch (error) {
       next(error);
     }
   }
 
-  static async createUnit(req, res, next) {
+  static async createShelf(req, res, next) {
     try {
-      const { unit_name, unit_code } = req.body;
+      const { shelf_name, shelf_code } = req.body;
 
       const data = {
-        unit_name,
-        unit_code,
+    shelf_name,
+        shelf_code,
       };
 
-      await Unit.create(data);
+      await Shelf.create(data);
       res.status(201).json({
         error: false,
         msg: `Success`,
@@ -35,42 +35,42 @@ class Controller {
     }
   }
 
-  static async getUnitById(req, res, next) {
+  static async getShelfById(req, res, next) {
     try {
       const { id } = req.params;
-      const unit = await Unit.findOne({
+      const Shelf = await Shelf.findOne({
         where: {
           id,
           status: true,
         },
       });
-      if (!unit) {
+      if (!Shelf) {
         throw {
           name: "not_found",
           code: 404,
-          msg: "Unit not found",
+          msg: "Shelf not found",
         };
       }
 
       res.status(200).json({
         error: false,
         msg: `Success`,
-        data: unit,
+        data: Shelf,
       });
     } catch (error) {
       next(error);
     }
   }
 
-  static async deleteUnit(req, res, next) {
+  static async deleteShelf(req, res, next) {
     try {
       const { id } = req.params;
-      const unit = await Unit.findOne({
+      const Shelf = await Shelf.findOne({
         where: {
           id,
         },
       });
-      if (!unit) {
+      if (!Shelf) {
         throw {
           name: "Unauthorized",
           code: 401,
@@ -80,30 +80,30 @@ class Controller {
       const data = {
         status: false,
       };
-      await Unit.update(data, {
+      await Shelf.update(data, {
         where: {
           id,
         },
       });
       res.status(200).json({
         error: false,
-        msg: `success delete Units with id ${id}`,
+        msg: `success delete Shelfs with id ${id}`,
         data: [],
       });
     } catch (error) {
       next(error);
     }
   }
-  static async editUnit(req, res, next) {
+  static async editShelf(req, res, next) {
     try {
       const { id } = req.params;
-      const { unit_name, unit_code } = req.body;
-      const unit = await Unit.findOne({
+      const { Shelf_name, Shelf_code } = req.body;
+      const Shelf = await Shelf.findOne({
         where: {
           id,
         },
       });
-      if (!unit) {
+      if (!Shelf) {
         throw {
           name: "Unauthorized",
           code: 401,
@@ -111,10 +111,10 @@ class Controller {
         };
       }
       const data = {
-       unit_code,
-       unit_name
+       Shelf_code,
+       Shelf_name
       };
-      await Unit.update(data, {
+      await Shelf.update(data, {
         where: {
           id,
         },
@@ -130,14 +130,14 @@ class Controller {
   }
   static async login(req, res, next) {
     try {
-      const { Unitname, password } = req.body;
+      const { Shelfname, password } = req.body;
 
-      let findUnit = await Unit.findOne({
+      let findShelf = await Shelf.findOne({
         where: {
-          Unitname,
+          Shelfname,
         },
       });
-      if (!findUnit) {
+      if (!findShelf) {
         throw {
           name: "Unauthorized",
           code: 401,
@@ -145,7 +145,7 @@ class Controller {
         };
       }
 
-      const checkPassword = comparePassword(password, findUnit.password);
+      const checkPassword = comparePassword(password, findShelf.password);
 
       if (!checkPassword) {
         throw {
@@ -154,18 +154,18 @@ class Controller {
       }
 
       const payload = {
-        id: findUnit.id,
-        email: findUnit.email,
+        id: findShelf.id,
+        email: findShelf.email,
       };
 
       const authorization = generateToken(payload);
 
       res.status(200).json({
         error:false,
-        id: findUnit.id,
-        role: findUnit.role,
+        id: findShelf.id,
+        role: findShelf.role,
         authorization: authorization,
-        email: findUnit.email,
+        email: findShelf.email,
       });
     } catch (error) {
       next(error);
