@@ -1,6 +1,5 @@
 const { Unit } = require("../models");
-const { comparePassword } = require("../helpers/bcrypt");
-const { generateToken } = require("../helpers/jwt");
+
 class Controller {
   static async getUnit(req, res, next) {
     try {
@@ -18,10 +17,11 @@ class Controller {
   static async createUnit(req, res, next) {
     try {
       const { unit_name, unit_code } = req.body;
-
+      const {username} = req.userAccess
       const data = {
         unit_name,
         unit_code,
+        createdBy: username
       };
 
       await Unit.create(data);
@@ -65,6 +65,7 @@ class Controller {
   static async deleteUnit(req, res, next) {
     try {
       const { id } = req.params;
+      const {username} = req.userAccess
       const unit = await Unit.findOne({
         where: {
           id,
@@ -72,12 +73,13 @@ class Controller {
       });
       if (!unit) {
         throw {
-          name: "Unauthorized",
-          code: 401,
-          msg: "Invalid email/password",
+          name: "not_found",
+          code: 404,
+          msg: "Unit not found",
         };
       }
       const data = {
+        updatedBy:username,
         status: false,
       };
       await Unit.update(data, {
@@ -98,6 +100,7 @@ class Controller {
     try {
       const { id } = req.params;
       const { unit_name, unit_code } = req.body;
+      const {username} = req.userAccess
       const unit = await Unit.findOne({
         where: {
           id,
@@ -105,14 +108,15 @@ class Controller {
       });
       if (!unit) {
         throw {
-          name: "Unauthorized",
-          code: 401,
-          msg: "Invalid email/password",
+          name: "not_found",
+          code: 404,
+          msg: "Unit not found",
         };
       }
       const data = {
        unit_code,
-       unit_name
+       unit_name,
+       updatedBy:username
       };
       await Unit.update(data, {
         where: {
@@ -128,49 +132,7 @@ class Controller {
       next(error);
     }
   }
-  static async login(req, res, next) {
-    try {
-      const { Unitname, password } = req.body;
 
-      let findUnit = await Unit.findOne({
-        where: {
-          Unitname,
-        },
-      });
-      if (!findUnit) {
-        throw {
-          name: "Unauthorized",
-          code: 401,
-          msg: "Invalid email/password",
-        };
-      }
-
-      const checkPassword = comparePassword(password, findUnit.password);
-
-      if (!checkPassword) {
-        throw {
-          name: "Unauthorized",
-        };
-      }
-
-      const payload = {
-        id: findUnit.id,
-        email: findUnit.email,
-      };
-
-      const authorization = generateToken(payload);
-
-      res.status(200).json({
-        error:false,
-        id: findUnit.id,
-        role: findUnit.role,
-        authorization: authorization,
-        email: findUnit.email,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
 }
 
 module.exports = Controller;

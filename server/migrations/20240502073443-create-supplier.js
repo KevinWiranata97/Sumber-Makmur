@@ -9,25 +9,25 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      name: {
+      supplier_name: {
         type: Sequelize.STRING
       },
-      address: {
+      supplier_address: {
         type: Sequelize.STRING
       },
-      email: {
+      supplier_email: {
         type: Sequelize.STRING
       },
-      contact: {
+      supplier_contact: {
         type: Sequelize.STRING
       },
-      fax: {
+      supplier_fax: {
         type: Sequelize.STRING
       },
-      website: {
+      supplier_website: {
         type: Sequelize.STRING
       },
-      NPWP: {
+      supplier_NPWP: {
         type: Sequelize.STRING
       },
       status: {

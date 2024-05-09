@@ -14,18 +14,16 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   Supplier.init({
-    name: DataTypes.STRING,
-    address: DataTypes.STRING,
-    email: DataTypes.STRING,
-    contact: DataTypes.STRING,
-    fax: DataTypes.STRING,
-    website: DataTypes.STRING,
-    NPWP: DataTypes.STRING,
+    supplier_name: DataTypes.STRING,
+    supplier_address: DataTypes.STRING,
+    supplier_email: DataTypes.STRING,
+    supplier_contact: DataTypes.STRING,
+    supplier_fax: DataTypes.STRING,
+    supplier_website: DataTypes.STRING,
+    supplier_NPWP: DataTypes.STRING,
     status: DataTypes.BOOLEAN,
     createdBy: DataTypes.STRING,
     updatedBy: DataTypes.STRING,
-    updated_at: DataTypes.DATE,
-    created_at: DataTypes.DATE
   }, {
     sequelize,
     modelName: 'Supplier',
