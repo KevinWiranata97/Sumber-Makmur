@@ -28,8 +28,7 @@ module.exports = (sequelize, DataTypes) => {
     status: DataTypes.BOOLEAN,
     createdBy: DataTypes.STRING,
     updatedBy: DataTypes.STRING,
-    updated_at: DataTypes.DATE,
-    created_at: DataTypes.DATE
+
   }, {
     sequelize,
     modelName: 'Product',

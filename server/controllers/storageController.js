@@ -2,7 +2,7 @@ const {Storage } = require("../models");
 const { comparePassword } = require("../helpers/bcrypt");
 const { generateToken } = require("../helpers/jwt");
 class Controller {
-  static async getShelf(req, res, next) {
+  static async getStorage(req, res, next) {
     try {
       const storage = await Storage.findAll({
         where: {
@@ -15,13 +15,13 @@ class Controller {
     }
   }
 
-  static async createShelf(req, res, next) {
+  static async createStorage(req, res, next) {
     try {
-      const { shelf_name, shelf_code } = req.body;
+      const { storage_name, storage_code } = req.body;
 
       const data = {
-    shelf_name,
-        shelf_code,
+    storage_name,
+        storage_code,
       };
 
       await Storage.create(data);
@@ -35,16 +35,16 @@ class Controller {
     }
   }
 
-  static async getShelfById(req, res, next) {
+  static async getStorageById(req, res, next) {
     try {
       const { id } = req.params;
-      const Storage = await Storage.findOne({
+      const storage = await Storage.findOne({
         where: {
           id,
           status: true,
         },
       });
-      if (!Storage) {
+      if (!storage) {
         throw {
           name: "not_found",
           code: 404,
@@ -55,26 +55,26 @@ class Controller {
       res.status(200).json({
         error: false,
         msg: `Success`,
-        data: Storage,
+        data: storage,
       });
     } catch (error) {
       next(error);
     }
   }
 
-  static async deleteShelf(req, res, next) {
+  static async deleteStorage(req, res, next) {
     try {
       const { id } = req.params;
-      const Storage = await Storage.findOne({
+      const storage = await Storage.findOne({
         where: {
           id,
         },
       });
-      if (!Storage) {
+      if (!storage) {
         throw {
-          name: "Unauthorized",
-          code: 401,
-          msg: "Invalid email/password",
+          name: "not_found",
+          code: 404,
+          msg: "Storage not found",
         };
       }
       const data = {
@@ -87,32 +87,32 @@ class Controller {
       });
       res.status(200).json({
         error: false,
-        msg: `success delete Shelfs with id ${id}`,
+        msg: `success delete Storages with id ${id}`,
         data: [],
       });
     } catch (error) {
       next(error);
     }
   }
-  static async editShelf(req, res, next) {
+  static async editStorage(req, res, next) {
     try {
       const { id } = req.params;
-      const { Shelf_name, Shelf_code } = req.body;
-      const Storage = await Storage.findOne({
+      const { storage_name, storage_code } = req.body;
+      const storage = await Storage.findOne({
         where: {
           id,
         },
       });
-      if (!Storage) {
+      if (!storage) {
         throw {
-          name: "Unauthorized",
-          code: 401,
-          msg: "Invalid email/password",
+          name: "not_found",
+          code: 404,
+          msg: "Storage not found",
         };
       }
       const data = {
-       Shelf_code,
-       Shelf_name
+       storage_code,
+       storage_name
       };
       await Storage.update(data, {
         where: {
@@ -130,14 +130,14 @@ class Controller {
   }
   static async login(req, res, next) {
     try {
-      const { Shelfname, password } = req.body;
+      const { Storagename, password } = req.body;
 
-      let findShelf = await Storage.findOne({
+      let findStorage = await Storage.findOne({
         where: {
-          Shelfname,
+          Storagename,
         },
       });
-      if (!findShelf) {
+      if (!findStorage) {
         throw {
           name: "Unauthorized",
           code: 401,
@@ -145,7 +145,7 @@ class Controller {
         };
       }
 
-      const checkPassword = comparePassword(password, findShelf.password);
+      const checkPassword = comparePassword(password, findStorage.password);
 
       if (!checkPassword) {
         throw {
@@ -154,18 +154,18 @@ class Controller {
       }
 
       const payload = {
-        id: findShelf.id,
-        email: findShelf.email,
+        id: findStorage.id,
+        email: findStorage.email,
       };
 
       const authorization = generateToken(payload);
 
       res.status(200).json({
         error:false,
-        id: findShelf.id,
-        role: findShelf.role,
+        id: findStorage.id,
+        role: findStorage.role,
         authorization: authorization,
-        email: findShelf.email,
+        email: findStorage.email,
       });
     } catch (error) {
       next(error);

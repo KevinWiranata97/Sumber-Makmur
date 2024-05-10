@@ -19,7 +19,7 @@ class Controller {
     try {
       const { shelf_name, shelf_code } = req.body;
       const {username} = req.userAccess
-      console.log(req.userAccess);
+     
       const data = {
     shelf_name,
         shelf_code,
@@ -76,9 +76,9 @@ class Controller {
       });
       if (!shelf) {
         throw {
-          name: "Unauthorized",
-          code: 401,
-          msg: "Invalid email/password",
+          name: "not_found",
+          code: 404,
+          msg: "Shelf not found",
         };
       }
       const data = {
