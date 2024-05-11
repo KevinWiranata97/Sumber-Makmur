@@ -83,6 +83,45 @@ const MyModal = ({ showModal, handleClose, data,fungsi }) => {
     fungsi(data,id)
     handleClose(); // Close modal after form submission
   };
+
+  const handleDelete = (e) => {
+    e.preventDefault();
+    Swal.fire({
+      title: "Apakah Anda yakin?",
+      text: "Anda tidak akan dapat mengembalikannya!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Ya, hapus!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteProduct(id)
+        handleClose();
+      }
+    })
+  };
+
+  async function deleteProduct(id) {
+    try {
+      const response = await axios({
+        method: "DELETE",
+        url: `${process.env.REACT_APP_API_URL}/products/${id}`,
+        headers: {
+          authorization: localStorage.getItem("authorization"),
+        },
+      });
+
+      console.log(response);
+      Swal.fire({
+        icon: "success",
+        title: "Save data",
+        text: response.data.message,
+      })
+
+    } catch (error) {
+      console.log(error);
+    }
+  }
   async function fetchUnit() {
     try {
       const response = await axios({
@@ -114,66 +153,69 @@ const MyModal = ({ showModal, handleClose, data,fungsi }) => {
     }
   }
 return (
-    <Modal show={showModal} onHide={handleClose} size="xl">
-      <Modal.Header closeButton>
-        <Modal.Title>{data ? 'Edit Item' : 'Add New Item'}</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <Form onSubmit={handleSubmit}>
-          <div className="row">
-            {columns.map((column) => (
-              <div className="col-6 mb-2" key={column.field}>
-                <Form.Group controlId={column.field}>
-                  <Form.Label>{column.headerName}</Form.Label>
-                  {column.field === 'storage_id' || column.field === 'unit_id' ? (
-                    <Form.Control
-                      as="select"
-                      name={column.field}
-                      value={formData[column.field]}
-                      onChange={handleChange}
-                      required
-                    >
-                      {/* Generate dropdown options */}
-                      <option value="" >{`Pilih ${column.headerName}`}</option>
-                      {column.field === 'storage_id' ? (
-                        storages.map((storage) => (
-                          <option key={storage.id} value={storage.id} selected={formData.storage_id === storage.id}>
-                            {storage.storage_name}
-                          </option>
-                        ))
-                      ) : null}
-                      {column.field === 'unit_id' ? (
-                        units.map((unit) => (
-                          <option key={unit.id} value={unit.id} selected={formData.unit_id === unit.id}>
-                            {unit.unit_code}
-                          </option>
-                        ))
-                      ) : null}
-                    </Form.Control>
-                  ) : (
-                    <Form.Control
-                      type="text"
-                      name={column.field}
-                      value={formData[column.field]}
-                      onChange={handleChange}
-                      required
-                    />
-                  )}
-                </Form.Group>
-              </div>
-            ))}
+  <Modal show={showModal} onHide={handleClose} size="xl">
+  <Modal.Header>
+    <Modal.Title>{data ? 'Edit Barang' : 'Tambah Barang'}</Modal.Title>
+    <button className="btn btn-link" onClick={handleDelete}>
+      <i className="fas fa-trash"  style={{ color: 'red' }}> </i>
+    </button>
+  </Modal.Header>
+  <Modal.Body>
+    <Form onSubmit={handleSubmit}>
+      <div className="row">
+        {columns.map((column) => (
+          <div className="col-6 mb-2" key={column.field}>
+            <Form.Group controlId={column.field}>
+              <Form.Label>{column.headerName}</Form.Label>
+              {column.field === 'storage_id' || column.field === 'unit_id' ? (
+                <Form.Control
+                  as="select"
+                  name={column.field}
+                  value={formData[column.field]}
+                  onChange={handleChange}
+                  required
+                >
+                  {/* Generate dropdown options */}
+                  <option value="">{`Pilih ${column.headerName}`}</option>
+                  {column.field === 'storage_id' ? (
+                    storages.map((storage) => (
+                      <option key={storage.id} value={storage.id} selected={formData.storage_id === storage.id}>
+                        {storage.storage_name}
+                      </option>
+                    ))
+                  ) : null}
+                  {column.field === 'unit_id' ? (
+                    units.map((unit) => (
+                      <option key={unit.id} value={unit.id} selected={formData.unit_id === unit.id}>
+                        {unit.unit_code}
+                      </option>
+                    ))
+                  ) : null}
+                </Form.Control>
+              ) : (
+                <Form.Control
+                  type="text"
+                  name={column.field}
+                  value={formData[column.field]}
+                  onChange={handleChange}
+                  required
+                />
+              )}
+            </Form.Group>
           </div>
-          <div className="text-right mb-3 mt-3">
-            <Button variant="secondary" className="mr-2" onClick={handleClose}>
-              Close
-            </Button>
-            <Button variant="primary" type="submit">
-              Save
-            </Button>
-          </div>
-        </Form>
-      </Modal.Body>
-    </Modal>
+        ))}
+      </div>
+      <div className="text-right mb-3 mt-3">
+        <Button variant="secondary" className="mr-2" onClick={handleClose}>
+          Close
+        </Button>
+        <Button variant="primary" type="submit">
+          Save
+        </Button>
+      </div>
+    </Form>
+  </Modal.Body>
+</Modal>
   );
 };
 const Home = () => {
@@ -181,9 +223,19 @@ const Home = () => {
   const [rows, setRows] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [productById, setProductById] = useState();
-  const handleClose = () => setShowModal(false);
+  const handleClose = () =>{
+    setProductById(null)
+    fetchProducts()
+    setShowModal(false);
+  }
   const handleShow = (productId) => {
+
+   if(productId === 'tambahBarang'){
+    setProductById(null)
+   }else{
     fetchProductsById(productId);
+   }
+  
     setShowModal(true);
   };
   async function fetchProducts() {
@@ -240,6 +292,29 @@ const Home = () => {
       console.log(error);
     }
   }
+
+  async function addProduct(data,id) {
+    try {
+      const response = await axios({
+        method: "POST",
+        url: `${process.env.REACT_APP_API_URL}/products`,
+        headers: {
+          authorization: localStorage.getItem("authorization"),
+        },
+        data: data,
+      });
+
+      Swal.fire({
+        icon: "success",
+        title: "Save data",
+        text: response.data.message,
+      }).then(() => {
+        fetchProducts()
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }
   const columns = [
     { field: "name", headerName: "Nama Barang", flex: 2 },
     { field: "part_number", headerName: "Part Number", flex: 1 },
@@ -267,13 +342,26 @@ const Home = () => {
     fetchProducts();
   }, []);
 
+  
   return (
     <>
       <Sidebar />
 
       <div className="content-wrapper">
         {/* Content Header (Page header) */}
-        <section className="content-header"></section>
+        <section className="content-header">
+        <div className="d-flex flex-row justify-content-between">
+            <div>
+              <div
+                  onClick={() => handleShow("tambahBarang")}
+                type="button"
+               className="btn btn-outline-primary ml-1"
+              >
+                Tambah Barang
+              </div>
+            </div>
+          </div>
+        </section>
         {/* Main content */}
         <section className="content">
           <div className="container-fluid">
@@ -299,7 +387,7 @@ const Home = () => {
                       showModal={showModal}
                       handleClose={handleClose}
                       data={productById}
-                      fungsi={editProduct}
+                      fungsi={productById?editProduct:addProduct}
                     />
                   </div>
                 </div>
