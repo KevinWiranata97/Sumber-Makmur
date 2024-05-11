@@ -1,4 +1,4 @@
-const { Product } = require("../models");
+const { Product, Storage, Unit } = require("../models");
 
 class Controller {
   static async getProduct(req, res, next) {
@@ -7,6 +7,17 @@ class Controller {
         where: {
           status: true,
         },
+        include: [
+          {
+            model: Storage,
+            attributes:['storage_name']
+          },
+          {
+            model: Unit,
+            attributes:['unit_code']
+          },
+        ],
+        order: [['id', 'ASC']]
       });
       res.status(200).json({
         error: false,
@@ -69,7 +80,10 @@ class Controller {
           id,
           status: true,
         },
+
       });
+
+
       if (!product) {
         throw {
           name: "not_found",
