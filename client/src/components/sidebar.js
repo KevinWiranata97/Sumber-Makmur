@@ -55,7 +55,18 @@ export default function Sidebar() {
                   <p>Barang</p>
                 </Link>
               </li>
-
+              <li className="nav-item">
+                <Link to="/units" className="nav-link">
+                  <i className="nav-icon fas fa-balance-scale"></i>
+                  <p>Satuan</p>
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link to="/storages" className="nav-link">
+                  <i className="nav-icon fas fa-warehouse"></i>
+                  <p>Gudang</p>
+                </Link>
+              </li>
               <li className="nav-item">
                 <Link
                   onClick={() => localStorage.clear()}

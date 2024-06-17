@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { Link } from "react-router-dom";
+
 export default function LoginViews() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");

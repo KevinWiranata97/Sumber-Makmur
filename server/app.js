@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const port = 3000;
+const port = 5000;
 const router = require("./routes/index");
 const errorHandler = require("./middlewares/errorHandler");
 const bodyParser = require("body-parser")

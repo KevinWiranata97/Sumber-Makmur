@@ -3,7 +3,7 @@ import Sidebar from "../components/sidebar";
 import { DataGrid } from "@mui/x-data-grid";
 import axios from "axios";
 import { useState, useEffect } from "react";
-import { Modal, Button, Form, Col } from "react-bootstrap";
+import { Modal, Button, Form } from "react-bootstrap";
 import Swal from "sweetalert2";
 
 const MyModal = ({ showModal, handleClose, data,fungsi }) => {
@@ -116,6 +116,8 @@ const MyModal = ({ showModal, handleClose, data,fungsi }) => {
         icon: "success",
         title: "Save data",
         text: response.data.message,
+      }).then((result) => {
+        handleClose();
       })
 
     } catch (error) {
@@ -157,7 +159,7 @@ return (
   <Modal.Header>
     <Modal.Title>{data ? 'Edit Barang' : 'Tambah Barang'}</Modal.Title>
     <button className="btn btn-link" onClick={handleDelete}>
-      <i className="fas fa-trash"  style={{ color: 'red' }}> </i>
+    {data ?<i className="fas fa-trash"  style={{ color: 'red' }}> </i> : <></> }  
     </button>
   </Modal.Header>
   <Modal.Body>
@@ -333,6 +335,7 @@ const Home = () => {
       flex: 1,
       valueGetter: (params) => params.unit_code,
     },
+    { field: "stock", headerName: "Stock", flex: 1 },
     { field: "cost", headerName: "Cost", flex: 1 },
     { field: "sell_price", headerName: "Harga Jual", flex: 1 },
     // Add more columns as needed
