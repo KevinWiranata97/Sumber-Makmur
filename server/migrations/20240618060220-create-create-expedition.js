@@ -2,49 +2,29 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Suppliers', {
+    await queryInterface.createTable('Expeditions', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      supplier_name: {
+      expedition_name: {
         type: Sequelize.STRING
       },
-      supplier_address: {
+      expedition_address: {
         type: Sequelize.STRING
       },
-      supplier_email: {
+      expedition_contact: {
         type: Sequelize.STRING
       },
-      supplier_contact: {
+      expedition_phone: {
         type: Sequelize.STRING
       },
-      supplier_fax: {
+      expedition_fax: {
         type: Sequelize.STRING
       },
-      supplier_website: {
-        type: Sequelize.STRING
-      },
-      supplier_NPWP: {
-        type: Sequelize.STRING
-      },
-      supplier_time: {
-        type: Sequelize.STRING
-      },
-      supplier_debt: {
-        type: Sequelize.FLOAT
-      },
-      status: {
-        type: Sequelize.BOOLEAN,
-        allowNull: false,
-        defaultValue:true
-      },
-      createdBy: {
-        type: Sequelize.STRING
-      },
-      updatedBy: {
+      expedition_destination: {
         type: Sequelize.STRING
       },
       createdAt: {
@@ -55,10 +35,9 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE
       }
-  
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Suppliers');
+    await queryInterface.dropTable('create-expeditions');
   }
 };

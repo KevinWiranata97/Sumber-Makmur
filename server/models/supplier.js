@@ -21,6 +21,8 @@ module.exports = (sequelize, DataTypes) => {
     supplier_fax: DataTypes.STRING,
     supplier_website: DataTypes.STRING,
     supplier_NPWP: DataTypes.STRING,
+    supplier_debt: DataTypes.FLOAT,
+    supplier_time: DataTypes.STRING,
     status: DataTypes.BOOLEAN,
     createdBy: DataTypes.STRING,
     updatedBy: DataTypes.STRING,

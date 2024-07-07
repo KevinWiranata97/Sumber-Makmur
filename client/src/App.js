@@ -1,10 +1,10 @@
 
 import './App.css';
 import { Routes, Route } from "react-router-dom";
-import Home from "./views/products";
-import LoginViews from "./views/login";
+import Home from "./views/Products/ProductViews";
+import LoginViews from "./views/Login/LoginViews";
 import Unit from './views/unit';
-import Storage from './views/storages';
+import Storage from './views/Storages/StorageViews';
 function App() {
   return (
     <Routes>

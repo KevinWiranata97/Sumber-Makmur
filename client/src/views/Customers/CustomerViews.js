@@ -1,5 +1,5 @@
 import React from "react";
-import Sidebar from "../components/sidebar";
+import Sidebar from "../../components/sidebar";
 import { DataGrid } from "@mui/x-data-grid";
 import axios from "axios";
 import { useState, useEffect } from "react";
@@ -10,15 +10,15 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
   const [id, setId] = useState();
 
   const columns = [
-    { field: "unit_name", headerName: "Nama Satuan", flex: 2 },
+    { field: "storage_name", headerName: "Rak", flex: 2 },
 
-    { field: "unit_code", headerName: "Kode Satuan", flex: 1 },
+    { field: "storage_code", headerName: "Id", flex: 1 },
     // Add more columns as needed
   ];
 
   const [formData, setFormData] = useState({
-    unit_name: "",
-    unit_code: "",
+    storage_name: "",
+    storage_code: "",
   });
 
   useEffect(() => {
@@ -29,8 +29,8 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
     } else {
       // Reset form data if data is empty
       setFormData({
-        unit_name: "",
-        unit_code: "",
+        storage_name: "",
+        storage_code: "",
       });
     }
   }, [data]);
@@ -73,7 +73,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
     try {
       const response = await axios({
         method: "DELETE",
-        url: `${process.env.REACT_APP_API_URL}/units/${id}`,
+        url: `${process.env.REACT_APP_API_URL}/storages/${id}`,
         headers: {
           authorization: localStorage.getItem("authorization"),
         },
@@ -95,7 +95,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
   return (
     <Modal show={showModal} onHide={handleClose} size="xl">
       <Modal.Header>
-        <Modal.Title>{data ? "Edit Satuan" : "Tambah Satuan"}</Modal.Title>
+        <Modal.Title>{data ? "Edit Gudang" : "Tambah Gudang"}</Modal.Title>
         <button className="btn btn-link" onClick={handleDelete}>
           {data ? (
             <i className="fas fa-trash" style={{ color: "red" }}>
@@ -114,7 +114,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                 <Form.Group controlId={column.field}>
                   <Form.Label>{column.headerName}</Form.Label>
                   {column.field === "storage_id" ||
-                  column.field === "unit_id" ? (
+                  column.field === "Storage_id" ? (
                     <Form.Control
                       as="select"
                       name={column.field}
@@ -155,23 +155,23 @@ const Storage = () => {
   const [productById, setProductById] = useState();
   const handleClose = () => {
     setProductById(null);
-    fetchUnits();
+    fetchStorages();
     setShowModal(false);
   };
   const handleShow = (productId) => {
     if (productId === "tambahBarang") {
       setProductById(null);
     } else {
-      fetchUnitById(productId);
+      fetchStorageById(productId);
     }
 
     setShowModal(true);
   };
-  async function fetchUnits() {
+  async function fetchStorages() {
     try {
       const response = await axios({
         method: "GET",
-        url: `${process.env.REACT_APP_API_URL}/units`,
+        url: `${process.env.REACT_APP_API_URL}/storages`,
         headers: {
           authorization: localStorage.getItem("authorization"),
         },
@@ -183,11 +183,11 @@ const Storage = () => {
     }
   }
 
-  async function fetchUnitById(id) {
+  async function fetchStorageById(id) {
     try {
       const response = await axios({
         method: "GET",
-        url: `${process.env.REACT_APP_API_URL}/units/${id}`,
+        url: `${process.env.REACT_APP_API_URL}/storages/${id}`,
         headers: {
           authorization: localStorage.getItem("authorization"),
         },
@@ -199,11 +199,11 @@ const Storage = () => {
     }
   }
 
-  async function editUnit(data, id) {
+  async function editStorage(data, id) {
     try {
       const response = await axios({
         method: "PUT",
-        url: `${process.env.REACT_APP_API_URL}/units/${id}`,
+        url: `${process.env.REACT_APP_API_URL}/storages/${id}`,
         headers: {
           authorization: localStorage.getItem("authorization"),
         },
@@ -215,18 +215,18 @@ const Storage = () => {
         title: "Save data",
         text: response.data.message,
       }).then(() => {
-        fetchUnits();
+        fetchStorages();
       });
     } catch (error) {
       console.log(error);
     }
   }
 
-  async function addUnits(data) {
+  async function addStorages(data) {
     try {
       const response = await axios({
         method: "POST",
-        url: `${process.env.REACT_APP_API_URL}/units`,
+        url: `${process.env.REACT_APP_API_URL}/storages`,
         headers: {
           authorization: localStorage.getItem("authorization"),
         },
@@ -238,7 +238,7 @@ const Storage = () => {
         title: "Save data",
         text: response.data.message,
       }).then(() => {
-        fetchUnits();
+        fetchStorages();
       });
     } catch (error) {
       console.log(error);
@@ -252,7 +252,7 @@ const Storage = () => {
   ];
 
   useEffect(() => {
-    fetchUnits();
+    fetchStorages();
   }, []);
 
   return (
@@ -269,7 +269,7 @@ const Storage = () => {
                 type="button"
                 className="btn btn-outline-primary ml-1"
               >
-                Tambah Satuan
+                Tambah Gudang
               </div>
             </div>
           </div>
@@ -299,7 +299,7 @@ const Storage = () => {
                       showModal={showModal}
                       handleClose={handleClose}
                       data={productById}
-                      fungsi={productById ? editUnit : addUnits}
+                      fungsi={productById ? editStorage : addStorages}
                     />
                   </div>
                 </div>

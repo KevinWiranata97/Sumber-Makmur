@@ -24,6 +24,8 @@ class Controller {
         supplier_fax,
         supplier_website,
         supplier_NPWP,
+        supplier_debt,
+        supplier_time
       } = req.body;
       const { username } = req.userAccess;
 
@@ -35,10 +37,11 @@ class Controller {
         supplier_fax,
         supplier_website,
         supplier_NPWP,
+        supplier_debt,
+        supplier_time,
         createdBy: username,
       };
 
-      
       await Supplier.create(data);
       res.status(201).json({
         error: false,
