@@ -15,6 +15,11 @@ module.exports = {
       area_code: {
         type: Sequelize.STRING
       },
+      status: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
@@ -26,6 +31,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('create-areas');
+    await queryInterface.dropTable('Areas');
   }
 };

@@ -15,7 +15,8 @@ module.exports = (sequelize, DataTypes) => {
   }
  Area.init({
     area_name: DataTypes.STRING,
-    area_code: DataTypes.STRING
+    area_code: DataTypes.STRING,
+    status:DataTypes.BOOLEAN,
   }, {
     sequelize,
     modelName: 'Area',

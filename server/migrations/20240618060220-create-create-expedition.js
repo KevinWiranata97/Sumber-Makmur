@@ -26,6 +26,11 @@ module.exports = {
       },
       expedition_destination: {
         type: Sequelize.STRING
+      },  
+      status: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
       },
       createdAt: {
         allowNull: false,
@@ -38,6 +43,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('create-expeditions');
+    await queryInterface.dropTable('Expeditions');
   }
 };

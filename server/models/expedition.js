@@ -19,10 +19,11 @@ module.exports = (sequelize, DataTypes) => {
     expedition_contact: DataTypes.STRING,
     expedition_phone: DataTypes.STRING,
     expedition_fax: DataTypes.STRING,
-    expedition_destination: DataTypes.STRING
+    expedition_destination: DataTypes.STRING,
+    status:DataTypes.BOOLEAN,
   }, {
     sequelize,
-    modelName: 'create-expedition',
+    modelName: 'Expedition',
   });
   return Expedition;
 };

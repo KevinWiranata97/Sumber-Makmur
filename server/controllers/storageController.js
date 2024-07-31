@@ -128,49 +128,7 @@ class Controller {
       next(error);
     }
   }
-  static async login(req, res, next) {
-    try {
-      const { Storagename, password } = req.body;
 
-      let findStorage = await Storage.findOne({
-        where: {
-          Storagename,
-        },
-      });
-      if (!findStorage) {
-        throw {
-          name: "Unauthorized",
-          code: 401,
-          msg: "Invalid email/password",
-        };
-      }
-
-      const checkPassword = comparePassword(password, findStorage.password);
-
-      if (!checkPassword) {
-        throw {
-          name: "Unauthorized",
-        };
-      }
-
-      const payload = {
-        id: findStorage.id,
-        email: findStorage.email,
-      };
-
-      const authorization = generateToken(payload);
-
-      res.status(200).json({
-        error:false,
-        id: findStorage.id,
-        role: findStorage.role,
-        authorization: authorization,
-        email: findStorage.email,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
 }
 
 module.exports = Controller;

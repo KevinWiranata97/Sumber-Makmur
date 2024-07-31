@@ -1,30 +1,29 @@
-const {Storage } = require("../models");
-const { comparePassword } = require("../helpers/bcrypt");
-const { generateToken } = require("../helpers/jwt");
+const {Area } = require("../models");
+
 class Controller {
-  static async getStorage(req, res, next) {
+  static async getArea(req, res, next) {
     try {
-      const storage = await Storage.findAll({
+      const area = await Area.findAll({
         where: {
           status: true,
         },
       });
-      res.status(200).json(storage);
+      res.status(200).json(area);
     } catch (error) {
       next(error);
     }
   }
 
-  static async createStorage(req, res, next) {
+  static async createArea(req, res, next) {
     try {
-      const { storage_name, storage_code } = req.body;
+      const { area_name, area_code } = req.body;
 
       const data = {
-    storage_name,
-        storage_code,
+    area_name,
+        area_code,
       };
 
-      await Storage.create(data);
+      await Area.create(data);
       res.status(201).json({
         error: false,
         msg: `Success`,
@@ -35,86 +34,86 @@ class Controller {
     }
   }
 
-  static async getStorageById(req, res, next) {
+  static async getAreaById(req, res, next) {
     try {
       const { id } = req.params;
-      const storage = await Storage.findOne({
+      const area = await Area.findOne({
         where: {
           id,
           status: true,
         },
       });
-      if (!storage) {
+      if (!area) {
         throw {
           name: "not_found",
           code: 404,
-          msg: "Storage not found",
+          msg: "Area not found",
         };
       }
 
       res.status(200).json({
         error: false,
         msg: `Success`,
-        data: storage,
+        data: area,
       });
     } catch (error) {
       next(error);
     }
   }
 
-  static async deleteStorage(req, res, next) {
+  static async deleteArea(req, res, next) {
     try {
       const { id } = req.params;
-      const storage = await Storage.findOne({
+      const area = await Area.findOne({
         where: {
           id,
         },
       });
-      if (!storage) {
+      if (!area) {
         throw {
           name: "not_found",
           code: 404,
-          msg: "Storage not found",
+          msg: "Area not found",
         };
       }
       const data = {
         status: false,
       };
-      await Storage.update(data, {
+      await Area.update(data, {
         where: {
           id,
         },
       });
       res.status(200).json({
         error: false,
-        msg: `success delete Storages with id ${id}`,
+        msg: `success delete Areas with id ${id}`,
         data: [],
       });
     } catch (error) {
       next(error);
     }
   }
-  static async editStorage(req, res, next) {
+  static async editArea(req, res, next) {
     try {
       const { id } = req.params;
-      const { storage_name, storage_code } = req.body;
-      const storage = await Storage.findOne({
+      const { area_name, area_code } = req.body;
+      const area = await Area.findOne({
         where: {
           id,
         },
       });
-      if (!storage) {
+      if (!area) {
         throw {
           name: "not_found",
           code: 404,
-          msg: "Storage not found",
+          msg: "Area not found",
         };
       }
       const data = {
-       storage_code,
-       storage_name
+       area_code,
+       area_name
       };
-      await Storage.update(data, {
+      await Area.update(data, {
         where: {
           id,
         },
@@ -128,49 +127,7 @@ class Controller {
       next(error);
     }
   }
-  static async login(req, res, next) {
-    try {
-      const { Storagename, password } = req.body;
 
-      let findStorage = await Storage.findOne({
-        where: {
-          Storagename,
-        },
-      });
-      if (!findStorage) {
-        throw {
-          name: "Unauthorized",
-          code: 401,
-          msg: "Invalid email/password",
-        };
-      }
-
-      const checkPassword = comparePassword(password, findStorage.password);
-
-      if (!checkPassword) {
-        throw {
-          name: "Unauthorized",
-        };
-      }
-
-      const payload = {
-        id: findStorage.id,
-        email: findStorage.email,
-      };
-
-      const authorization = generateToken(payload);
-
-      res.status(200).json({
-        error:false,
-        id: findStorage.id,
-        role: findStorage.role,
-        authorization: authorization,
-        email: findStorage.email,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
 }
 
 module.exports = Controller;
