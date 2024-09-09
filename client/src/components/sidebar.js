@@ -68,6 +68,34 @@ export default function Sidebar() {
                 </Link>
               </li>
               <li className="nav-item">
+                <Link to="/areas" className="nav-link">
+                <i className="nav-icon fas fa-map-marked-alt"></i>
+                  <p>Area</p>
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link to="/expeditions" className="nav-link">
+                <i className="nav-icon fas fa-truck"></i>
+                  <p>Ekspedisi</p>
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link to="/customers" className="nav-link">
+                <i className="nav-icon fas fa-address-book"></i>
+
+                  <p>Customer</p>
+                </Link>
+              </li>
+
+              <li className="nav-item">
+                <Link to="/customers" className="nav-link">
+                <i className="nav-icon fas fa-money-bill-wave"></i>
+
+
+                  <p>Transaction</p>
+                </Link>
+              </li>
+              <li className="nav-item">
                 <Link
                   onClick={() => localStorage.clear()}
                   to="/login"

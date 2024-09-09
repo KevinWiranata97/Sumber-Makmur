@@ -1,4 +1,4 @@
-const { Customer } = require("../models");
+const { Customer, Area, Expedition } = require("../models");
 
 class Controller {
   static async getCustomer(req, res, next) {
@@ -7,7 +7,19 @@ class Controller {
         where: {
           status: true,
         },
+        include: [
+          {
+            model: Area,
+            attributes:['area_name']
+          },
+          {
+            model: Expedition,
+            attributes:['expedition_name']
+          },
+        ],
       });
+
+      
       res.status(200).json({
         error: false,
         msg: `Success`,
