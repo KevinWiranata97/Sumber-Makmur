@@ -55,7 +55,7 @@ export default function LoginViews() {
             ></img>
           </div>
           <div className="card-body">
-            <p className="login-box-msg">Sign in to start your session</p>
+            <p className="login-box-msg">Sign in to start your session </p>
             <form className="mx-auto pt-3" onSubmit={login}>
               <div className="form-group" >
                 <div className="input-group">

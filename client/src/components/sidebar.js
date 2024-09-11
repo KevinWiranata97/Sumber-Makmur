@@ -16,11 +16,6 @@ export default function Sidebar() {
           {/* Sidebar user panel (optional) */}
           <div className="user-panel mt-3 pb-3 mb-3 d-flex">
       
-            <div className="info">
-              <a href="/" className="d-block">
-                {localStorage.getItem("name")}
-              </a>
-            </div>
           </div>
           {/* SidebarSearch Form */}
           <div className="form-inline">
@@ -86,13 +81,28 @@ export default function Sidebar() {
                   <p>Customer</p>
                 </Link>
               </li>
+              <li className="nav-item">
+                <Link to="/suppliers" className="nav-link">
+                <i className="nav-icon fas fa-handshake "></i>
+
+                  <p>Supplier</p>
+                </Link>
+              </li>
 
               <li className="nav-item">
-                <Link to="/customers" className="nav-link">
+                <Link to="/transactions" className="nav-link">
+                <i className="nav-icon fas fa-shopping-cart"></i>
+
+
+                  <p>Beli Barang</p>
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link to="/transactions" className="nav-link">
                 <i className="nav-icon fas fa-money-bill-wave"></i>
 
 
-                  <p>Transaction</p>
+                  <p>Jual Barang</p>
                 </Link>
               </li>
               <li className="nav-item">

@@ -1,59 +1,70 @@
+const { generateRandom6DigitNumber, generateCustomString } = require("../helpers/util");
 const {
   Transaction,
   Transaction_Product,
   Product,
   sequelize,
+  Supplier,
+  Customer
 } = require("../models");
 
 class Controller {
-    static async getTransaction(req, res, next) {
-        try {
-          // Extract the type query parameter
-          const { type } = req.query;
-      
-          // Construct the where clause based on the presence of the type parameter
-          const whereClause = {
-            status: true,
-          };
-          if (type && (type === 'buy' || type === 'sell')) {
-            whereClause.transaction_type = type;
-          }
-      
-          // Query the transactions with the constructed where clause
-          const transactions = await Transaction.findAll({
-            where: whereClause,
+  static async getTransaction(req, res, next) {
+    try {
+      // Extract the type query parameter
+      const { type } = req.query;
+
+      // Construct the where clause based on the presence of the type parameter
+      const whereClause = {
+        status: true,
+      };
+      if (type && (type === 'buy' || type === 'sell')) {
+        whereClause.transaction_type = type;
+      }
+
+
+      const transactions = await Transaction.findAll({
+        where: whereClause,
+        include: [
+          {
+            model: Transaction_Product,
+            required: true,
             include: [
               {
-                model: Transaction_Product,
-                required: true,
-                include: [
-                  {
-                    model: Product,
-                    attributes: {
-                      exclude: ['status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt', 'NPWP', 'storage_id', 'type','stock']
-                    }
-                  },
-                ],
+                model: Product,
                 attributes: {
-                  exclude: ['status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt']
+                  exclude: ['status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt', 'NPWP', 'storage_id', 'type', 'stock']
                 }
               },
             ],
             attributes: {
               exclude: ['status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt']
             }
-          });
-      
-          res.status(200).json({
-            error: false,
-            msg: `Success`,
-            data: transactions,
-          });
-        } catch (error) {
-          next(error);
+          },
+          {
+            model: Supplier,
+            attributes: ['id', 'supplier_name']
+          },
+          {
+            model: Customer,
+            attributes: ['id', 'customer_name']
+          },
+        ],
+        attributes: {
+          exclude: ['status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt']
         }
-      }
-      
+      });
+
+      res.status(200).json({
+        error: false,
+        msg: `Success`,
+        data: transactions,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
 
   static async createTransaction(req, res, next) {
     let transaction;
@@ -69,13 +80,15 @@ class Controller {
       transaction_type,
       product_id,
       qty,
+      transaction_payment_due_time,
+      PPN,
     } = req.body;
     const { username } = req.userAccess;
-  
+
     try {
       // Start a Sequelize transaction
       const t = await sequelize.transaction();
-  
+
       try {
         // Create the transaction record
         transaction = await Transaction.create(
@@ -89,11 +102,15 @@ class Controller {
             transaction_note,
             transaction_PO_note,
             transaction_type,
+            transaction_invoice_number:generateRandom6DigitNumber(),
+            transaction_proof_number:generateCustomString(generateRandom6DigitNumber()),
+            PPN,
+            transaction_payment_due_time,
             createdBy: username,
           },
           { transaction: t }
         );
-  
+
         // Create entries in the Transaction_Products table for each product associated with the transaction
         const products = await Promise.all(
           product_id.map(async (productId, index) => {
@@ -102,11 +119,11 @@ class Controller {
                 id: productId,
               },
             });
-  
+
             if (!product) {
               throw new Error(`Product with ID ${productId} not found.`);
             }
-  
+
             // Adjust stock based on transaction type
             if (transaction_type === 'buy') {
               // Increase stock
@@ -118,10 +135,10 @@ class Controller {
                 throw new Error(`Insufficient stock for product with ID ${productId}.`);
               }
             }
-  
+
             // Save the updated product
             await product.save({ transaction: t });
-  
+
             // Create entry in Transaction_Products table
             await Transaction_Product.create(
               {
@@ -131,14 +148,14 @@ class Controller {
               },
               { transaction: t }
             );
-  
+
             return product;
           })
         );
-  
+
         // If everything is successful, commit the transaction
         await t.commit();
-  
+
         res.status(201).json({
           error: false,
           msg: `Success`,
@@ -153,7 +170,7 @@ class Controller {
       next(error);
     }
   }
-  
+
 
   static async getTransactionById(req, res, next) {
     try {
@@ -161,7 +178,7 @@ class Controller {
       const transactions = await Transaction.findOne({
         where: {
           status: true,
-          id:id
+          id: id
         },
         include: [
           {
@@ -169,19 +186,19 @@ class Controller {
             include: [
               {
                 model: Product,
-                attributes:{
-                    exclude:['status','createdBy','updatedBy','createdAt','updatedAt','NPWP','storage_id','type']
+                attributes: {
+                  exclude: ['status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt', 'NPWP', 'storage_id', 'type']
                 }
               },
-              
+
             ],
-            attributes:{
-                exclude:['status','createdBy','updatedBy','createdAt','updatedAt']
+            attributes: {
+              exclude: ['status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt']
             }
           },
         ],
-        attributes:{
-            exclude:['status','createdBy','updatedBy','createdAt','updatedAt']
+        attributes: {
+          exclude: ['status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt']
         }
       });
       if (!transactions) {

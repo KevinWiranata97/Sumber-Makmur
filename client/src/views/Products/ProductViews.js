@@ -26,6 +26,7 @@ const MyModal = ({ showModal, handleClose, data,fungsi }) => {
       headerName: "Satuan",
       flex: 1,
     },
+    { field: "stock", headerName: "Stock", flex: 1 },
     { field: "cost", headerName: "Cost", flex: 1 },
     { field: "sell_price", headerName: "Harga Jual", flex: 1 },
     // Add more columns as needed
@@ -42,6 +43,7 @@ const MyModal = ({ showModal, handleClose, data,fungsi }) => {
     unit_id: "",
     cost: "",
     sell_price: "",
+    stock:""
   });
 
   useEffect(() => {
@@ -62,6 +64,7 @@ const MyModal = ({ showModal, handleClose, data,fungsi }) => {
         unit_id: "",
         cost: "",
         sell_price: "",
+        stock:""
       });
     }
   }, [data]);
@@ -166,6 +169,7 @@ return (
     <Form onSubmit={handleSubmit}>
       <div className="row">
         {columns.map((column) => (
+          
           <div className="col-6 mb-2" key={column.field}>
             <Form.Group controlId={column.field}>
               <Form.Label>{column.headerName}</Form.Label>
@@ -250,6 +254,8 @@ const Home = () => {
         },
       });
 
+ 
+      
       setRows(response.data.data);
     } catch (error) {
       console.log(error);

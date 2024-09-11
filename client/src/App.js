@@ -3,11 +3,14 @@ import './App.css';
 import { Routes, Route } from "react-router-dom";
 import Home from "./views/Products/ProductViews";
 import LoginViews from "./views/Login/LoginViews";
-import Unit from './views/units/unit';
+import Unit from './views/Units/unit';
 import Storage from './views/Storages/StorageViews';
 import Area from './views/Areas/area'
 import Expedition from './views/Expeditions/expedition'
 import Customer from './views/Customers/CustomerViews'
+import Transaction from './views/Transactions/transactions';
+import Supplier from './views/Suppliers/SupplierViews';
+import TransactionBuy from './views/Transactions/transactions';
 function App() {
   return (
     <Routes>
@@ -19,6 +22,8 @@ function App() {
       <Route Route path="/expeditions" element={<Expedition/>} />
       <Route Route path="/customers" element={<Customer/>} />
       <Route Route path="/login" element={<LoginViews />} />
+      <Route Route path="/transactions" element={<TransactionBuy />} />
+      <Route Route path="/suppliers" element={<Supplier />} />
     </Routes>
   );
 }

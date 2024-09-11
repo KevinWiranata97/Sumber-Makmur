@@ -3,22 +3,41 @@ import Sidebar from "../../components/sidebar";
 import { DataGrid } from "@mui/x-data-grid";
 import axios from "axios";
 import { useState, useEffect } from "react";
-import { Modal, Button, Form} from "react-bootstrap";
+import { Modal, Button, Form } from "react-bootstrap";
 import Swal from "sweetalert2";
 
 const MyModal = ({ showModal, handleClose, data, fungsi }) => {
   const [id, setId] = useState();
 
   const columns = [
-    { field: "storage_name", headerName: "Rak", flex: 2 },
+    { field: "supplier_name", headerName: "Nama Supplier", flex: 1 },
 
-    { field: "storage_code", headerName: "Id", flex: 1 },
+    { field: "supplier_address", headerName: "Alamat", flex: 1 },
+
+    { field: "supplier_email", headerName: "Email", flex: 1 },
+
+    { field: "supplier_contact", headerName: "Kontak", flex: 1 },
+
+    { field: "supplier_fax", headerName: "Fax", flex: 1 },
+
+    { field: "supplier_NPWP", headerName: "NPWP", flex: 1 },
+
+    { field: "supplier_debt", headerName: "Saldo Hutang", flex: 1 },
+
+    { field: "supplier_time", headerName: "Waktu", flex: 1 },
+
     // Add more columns as needed
   ];
-
   const [formData, setFormData] = useState({
-    storage_name: "",
-    storage_code: "",
+    supplier_name: "",
+    supplier_address: "",
+    supplier_email: "",
+    supplier_contact: "",
+    supplier_fax: "",
+    supplier_NPWP: "",
+    supplier_debt: "",
+    supplier_time: "",
+
   });
 
   useEffect(() => {
@@ -29,8 +48,14 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
     } else {
       // Reset form data if data is empty
       setFormData({
-        storage_name: "",
-        storage_code: "",
+        supplier_name: "",
+        supplier_address: "",
+        supplier_email: "",
+        supplier_contact: "",
+        supplier_fax: "",
+        supplier_NPWP: "",
+        supplier_debt: "",
+        supplier_time: "",
       });
     }
   }, [data]);
@@ -64,7 +89,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
     }).then((result) => {
       if (result.isConfirmed) {
         deleteProduct(id);
-     
+
       }
     });
   };
@@ -73,13 +98,13 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
     try {
       const response = await axios({
         method: "DELETE",
-        url: `${process.env.REACT_APP_API_URL}/storages/${id}`,
+        url: `${process.env.REACT_APP_API_URL}/suppliers/${id}`,
         headers: {
           authorization: localStorage.getItem("authorization"),
         },
       });
 
-      
+
       Swal.fire({
         icon: "success",
         title: "Save data",
@@ -114,7 +139,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                 <Form.Group controlId={column.field}>
                   <Form.Label>{column.headerName}</Form.Label>
                   {column.field === "storage_id" ||
-                  column.field === "Storage_id" ? (
+                    column.field === "Storage_id" ? (
                     <Form.Control
                       as="select"
                       name={column.field}
@@ -148,30 +173,30 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
     </Modal>
   );
 };
-const Storage = () => {
+const Supplier = () => {
   // Example data for the table
   const [rows, setRows] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [productById, setProductById] = useState();
   const handleClose = () => {
     setProductById(null);
-    fetchStorages();
+    fetchsuppliers();
     setShowModal(false);
   };
   const handleShow = (productId) => {
     if (productId === "tambahBarang") {
       setProductById(null);
     } else {
-      fetchStorageById(productId);
+      fetchSupplierById(productId);
     }
 
     setShowModal(true);
   };
-  async function fetchStorages() {
+  async function fetchsuppliers() {
     try {
       const response = await axios({
         method: "GET",
-        url: `${process.env.REACT_APP_API_URL}/storages`,
+        url: `${process.env.REACT_APP_API_URL}/suppliers`,
         headers: {
           authorization: localStorage.getItem("authorization"),
         },
@@ -183,27 +208,27 @@ const Storage = () => {
     }
   }
 
-  async function fetchStorageById(id) {
+  async function fetchSupplierById(id) {
     try {
       const response = await axios({
         method: "GET",
-        url: `${process.env.REACT_APP_API_URL}/storages/${id}`,
+        url: `${process.env.REACT_APP_API_URL}/suppliers/${id}`,
         headers: {
           authorization: localStorage.getItem("authorization"),
         },
       });
-   
+
       setProductById(response.data.data);
     } catch (error) {
       console.log(error);
     }
   }
 
-  async function editStorage(data, id) {
+  async function editSupplier(data, id) {
     try {
       const response = await axios({
         method: "PUT",
-        url: `${process.env.REACT_APP_API_URL}/storages/${id}`,
+        url: `${process.env.REACT_APP_API_URL}/suppliers/${id}`,
         headers: {
           authorization: localStorage.getItem("authorization"),
         },
@@ -215,18 +240,18 @@ const Storage = () => {
         title: "Save data",
         text: response.data.message,
       }).then(() => {
-        fetchStorages();
+        fetchsuppliers();
       });
     } catch (error) {
       console.log(error);
     }
   }
 
-  async function addStorages(data) {
+  async function addSuppliers(data) {
     try {
       const response = await axios({
         method: "POST",
-        url: `${process.env.REACT_APP_API_URL}/storages`,
+        url: `${process.env.REACT_APP_API_URL}/suppliers`,
         headers: {
           authorization: localStorage.getItem("authorization"),
         },
@@ -238,21 +263,34 @@ const Storage = () => {
         title: "Save data",
         text: response.data.message,
       }).then(() => {
-        fetchStorages();
+        fetchsuppliers();
       });
     } catch (error) {
       console.log(error);
     }
   }
   const columns = [
-    { field: "storage_name", headerName: "Rak", flex: 2 },
+    { field: "supplier_name", headerName: "Nama Supplier", flex: 1 },
 
-    { field: "storage_code", headerName: "Id", flex: 1 },
+    { field: "supplier_address", headerName: "Alamat", flex: 1 },
+
+    { field: "supplier_email", headerName: "Email", flex: 1 },
+
+    { field: "supplier_contact", headerName: "Kontak", flex: 1 },
+
+    { field: "supplier_fax", headerName: "Fax", flex: 1 },
+
+    { field: "supplier_NPWP", headerName: "NPWP", flex: 1 },
+
+    { field: "supplier_debt", headerName: "Saldo Hutang", flex: 1 },
+
+    { field: "supplier_time", headerName: "Waktu", flex: 1 },
+
     // Add more columns as needed
   ];
 
   useEffect(() => {
-    fetchStorages();
+    fetchsuppliers();
   }, []);
 
   return (
@@ -269,7 +307,7 @@ const Storage = () => {
                 type="button"
                 className="btn btn-outline-primary ml-1"
               >
-                Tambah Gudang
+                Tambah Supplier
               </div>
             </div>
           </div>
@@ -299,7 +337,7 @@ const Storage = () => {
                       showModal={showModal}
                       handleClose={handleClose}
                       data={productById}
-                      fungsi={productById ? editStorage : addStorages}
+                      fungsi={productById ? editSupplier : addSuppliers}
                     />
                   </div>
                 </div>
@@ -316,4 +354,4 @@ const Storage = () => {
   );
 };
 
-export default Storage;
+export default Supplier;
