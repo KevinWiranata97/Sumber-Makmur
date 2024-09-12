@@ -5,7 +5,8 @@ const {
   Product,
   sequelize,
   Supplier,
-  Customer
+  Customer,
+  Unit
 } = require("../models");
 
 class Controller {
@@ -52,13 +53,44 @@ class Controller {
         ],
         attributes: {
           exclude: ['status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt']
-        }
+        },
+        order: [['id', 'ASC']] // Sort by id in ascending order
       });
+      
 
+
+
+      // After fetching the transactions, calculate the total amount
+      const transactionsWithTotalAmount = transactions.map(transaction => {
+        // Calculate the total amount for each transaction
+        const total_amount = transaction.Transaction_Products.reduce((sum, product) => {
+          return sum + (product.qty * product.Product.cost);
+        }, 0); // Start from 0
+
+        // Format the transaction date
+        const fix_transaction_date = new Date(transaction.transaction_date).toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+
+        const fix_transaction_due_date = new Date(transaction.transaction_due_date).toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });;
+        // Add the total amount and formatted date to the transaction object
+        return {
+          ...transaction.toJSON(), // Convert the Sequelize object to a plain object
+          total_amount,
+          transaction_date: fix_transaction_date,
+          transaction_due_date: fix_transaction_due_date  // Include the formatted transaction date
+        };
+      });
       res.status(200).json({
         error: false,
         msg: `Success`,
-        data: transactions,
+        data: transactionsWithTotalAmount,
       });
     } catch (error) {
       next(error);
@@ -102,8 +134,8 @@ class Controller {
             transaction_note,
             transaction_PO_note,
             transaction_type,
-            transaction_invoice_number:generateRandom6DigitNumber(),
-            transaction_proof_number:generateCustomString(generateRandom6DigitNumber()),
+            transaction_invoice_number: generateRandom6DigitNumber(),
+            transaction_proof_number: generateCustomString(generateRandom6DigitNumber()),
             PPN,
             transaction_payment_due_time,
             createdBy: username,
@@ -120,6 +152,8 @@ class Controller {
               },
             });
 
+            console.log(product.cost);
+
             if (!product) {
               throw new Error(`Product with ID ${productId} not found.`);
             }
@@ -127,7 +161,12 @@ class Controller {
             // Adjust stock based on transaction type
             if (transaction_type === 'buy') {
               // Increase stock
+
+
               product.stock += parseInt(qty[index]);
+
+
+
             } else if (transaction_type === 'sell') {
               // Decrease stock
               product.stock -= parseInt(qty[index]);
@@ -142,6 +181,7 @@ class Controller {
             // Create entry in Transaction_Products table
             await Transaction_Product.create(
               {
+                current_cost: product.cost,
                 transaction_id: transaction.id,
                 product_id: productId,
                 qty: qty[index],
@@ -183,13 +223,23 @@ class Controller {
         include: [
           {
             model: Transaction_Product,
+            where: {
+              status: true
+            },
             include: [
               {
                 model: Product,
                 attributes: {
                   exclude: ['status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt', 'NPWP', 'storage_id', 'type']
-                }
+                },
+                include: [
+                  {
+                    model: Unit,
+                    attributes: ['unit_code']
+                  },
+                ]
               },
+
 
             ],
             attributes: {
@@ -208,11 +258,44 @@ class Controller {
           msg: "Transaction not found",
         };
       }
+      const total_qty = transactions.Transaction_Products.reduce((sum, product) => {
+        return sum + product.qty;
+      }, 0); // Start from 0
+
+
+      const total_dpp = transactions.Transaction_Products.reduce((sum, product) => {
+        return sum + (product.qty * product.Product.cost);
+      }, 0);
+
+      // Calculate total PPN (10% of total DPP)
+      let total_ppn
+      if (transactions.PPN === true) {
+        total_ppn = total_dpp * 0.1;
+      } else {
+        total_ppn = 0
+      }
+
+      const fix_transaction_date = new Date(transactions.transaction_date).toISOString().split('T')[0];
+      const fix_transaction_due_date = new Date(transactions.transaction_due_date).toISOString().split('T')[0];
+      const total_netto = total_dpp + total_ppn
+
+      const transactionWithTotalAmount = {
+        ...transactions.toJSON(), // Convert Sequelize instance to plain object
+        total_amount: total_dpp,
+        total_dpp,
+        total_ppn,
+        total_netto,
+        total_qty,
+        transaction_date: fix_transaction_date,
+        transaction_due_date: fix_transaction_due_date
+      };
+
+      // Send the response with total_amount included
 
       res.status(200).json({
         error: false,
         msg: `Success`,
-        data: transactions,
+        data: transactionWithTotalAmount,
       });
     } catch (error) {
       next(error);
@@ -261,10 +344,10 @@ class Controller {
         transaction_due_date,
         transaction_PO_num,
         transaction_surat_jalan,
-        transaction_product_id,
-        transaction_qty,
+        transaction_supplier_id,
         transaction_note,
         transaction_PO_note,
+        PPN
       } = req.body;
       const { username } = req.userAccess;
 
@@ -286,10 +369,10 @@ class Controller {
         transaction_due_date,
         transaction_PO_num,
         transaction_surat_jalan,
-        transaction_product_id,
-        transaction_qty,
+        transaction_supplier_id,
         transaction_note,
         transaction_PO_note,
+        PPN,
         updatedBy: username,
       };
       await Transaction.update(data, {
@@ -302,6 +385,136 @@ class Controller {
         msg: `success`,
         data: [],
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async deleteTransactionProduct(req, res, next) {
+    try {
+
+
+      const { id } = req.params;
+      const { username } = req.userAccess;
+      const transaction = await Transaction_Product.findOne({
+        where: {
+          id,
+        },
+      });
+      if (!transaction) {
+        throw {
+          name: "not_found",
+          code: 404,
+          msg: "Transaction not found",
+        };
+      }
+      const data = {
+        status: false,
+        updatedBy: username,
+      };
+      await Transaction_Product.update(data, {
+        where: {
+          id,
+        },
+      });
+      res.status(200).json({
+        error: false,
+        msg: `success delete Transactions product with id ${id}`,
+        data: [],
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async addTransactionProduct(req, res, next) {
+    try {
+
+
+      const { transaction_id, product_id, qty, transaction_type } = req.body
+
+      const transaction = await Transaction.findOne({
+        where: {
+          id: transaction_id,
+        },
+      });
+
+      if (!transaction) {
+        throw {
+          name: "not_found",
+          code: 404,
+          msg: "Transaction not found",
+        };
+      }
+
+      try {
+        // Create the transaction record
+        const t = await sequelize.transaction();
+
+
+        // Create entries in the Transaction_Products table for each product associated with the transaction
+        const products = await Promise.all(
+          product_id.map(async (productId, index) => {
+            const product = await Product.findOne({
+              where: {
+                id: productId,
+              },
+            });
+
+            console.log(product.cost);
+
+            if (!product) {
+              throw new Error(`Product with ID ${productId} not found.`);
+            }
+
+            // Adjust stock based on transaction type
+            if (transaction_type === 'buy') {
+              // Increase stock
+
+
+              product.stock += parseInt(qty[index]);
+
+
+
+            } else if (transaction_type === 'sell') {
+              // Decrease stock
+              product.stock -= parseInt(qty[index]);
+              if (product.stock < 0) {
+                throw new Error(`Insufficient stock for product with ID ${productId}.`);
+              }
+            }
+
+            // Save the updated product
+            await product.save({ transaction: t });
+
+            // Create entry in Transaction_Products table
+            await Transaction_Product.create(
+              {
+                current_cost: product.cost,
+                transaction_id: transaction.id,
+                product_id: productId,
+                qty: qty[index],
+              },
+              { transaction: t }
+            );
+
+            return product;
+          })
+        );
+
+        // If everything is successful, commit the transaction
+        await t.commit();
+
+        res.status(201).json({
+          error: false,
+          msg: `Success`,
+          data: {products },
+        });
+      } catch (error) {
+        // If any error occurs during the transaction, rollback changes
+        await t.rollback();
+        throw error; // Rethrow the error to be handled by the outer catch block
+      }
     } catch (error) {
       next(error);
     }

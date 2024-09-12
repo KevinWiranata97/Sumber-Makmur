@@ -117,13 +117,14 @@ class Controller {
   static async editSupplier(req, res, next) {
     try {
       const { id } = req.params;
-      const {      supplier_name,
+      const { supplier_name,
         supplier_address,
         supplier_email,
         supplier_contact,
         supplier_fax,
         supplier_website,
-        supplier_NPWP } = req.body;
+        supplier_NPWP, supplier_debt,
+        supplier_time } = req.body;
       const { username } = req.userAccess;
 
       const supplier = await Supplier.findOne({
@@ -147,6 +148,8 @@ class Controller {
         supplier_fax,
         supplier_website,
         supplier_NPWP,
+        supplier_debt,
+        supplier_time,
         updatedBy: username,
       };
       await Supplier.update(data, {

@@ -7,57 +7,71 @@ import { Modal, Button, Form } from "react-bootstrap";
 import Swal from "sweetalert2";
 import { Checkbox } from '@mui/material';
 const MyModal = ({ showModal, handleClose, data, fungsi }) => {
-  const [id, setId] = useState();
-  const [areas, setArea] = useState([])
-  const [expeditions, setExpedition] = useState([])
-  const columns = [
-    { field: "customer_name", headerName: "Nama Customer", flex: 2 },
 
-    { field: "customer_address_1", headerName: "Alamat", flex: 1 },
-    { field: "customer_address_2", headerName: "Alamat 2", flex: 1 },
-    { field: "customer_expedition_id", headerName: "Expedisi", flex: 1 },
-    { field: "customer_area_id", headerName: "Area", flex: 1 },
-    { field: "customer_phone", headerName: "Nomor Telpon", flex: 1 },
-    { field: "customer_email", headerName: "Email", flex: 1 },
-    { field: "customer_contact", headerName: "Kontak", flex: 1 },
-    { field: "customer_plafon", headerName: "Plafon", flex: 1 },
-    { field: "customer_NPWP", headerName: "NPWP", flex: 1 },
-    { field: "customer_grade_id", headerName: "Grade", flex: 1 },
-    { field: "customer_time", headerName: "Waktu", flex: 1 },
-    { field: "customer_discount", headerName: "Potongan", flex: 1 },
-  ];
+  // console.log(data, ">>>>>>");
+  // console.log(data.Transaction_Products.length);
+
+  // const [dataRender, setDataRender] = useState([])
+
+  // if(data){
+  //   setDataRender(data)
+  // }
+
+
+
+  const [transaction_id, setTransactionId] = useState();
+  const [suppliers, setSuppliers] = useState([])
+  const [products, setProducts] = useState([])
+  const [rows, setRows] = useState([]);
 
   const [formData, setFormData] = useState({
-    customer_name: "",
-    customer_address_1: "",
-    customer_address_2: "",
-    customer_expedition_id: "",
-    customer_area_id: "",
-    customer_phone: "",
-    customer_email: "",
-    customer_contact: "",
-    customer_plafon: "",
-    customer_NPWP: "",
-    customer_grade_id: "",
-    customer_time: "",
-    customer_discount: "",
+    transaction_proof_number: "",
+    transaction_invoice_number: "",
+    transaction_date: "",
+    transaction_due_date: "",
+    transaction_supplier_id: "",
+    PPN: "true",
+    transaction_note: ""
   });
 
 
+
+
+
+
   useEffect(() => {
-    fetchArea()
-    fetchExpeditions()
+    fetchSuppliers()
+    fetchProducts()
+
+    // fetchTransactionById(28)
     if (data) {
       setFormData(data);
-      setId(data.id);
+      setTransactionId(data.id);
+      setRows(data.Transaction_Products);
     } else {
-      // Reset form data if data is empty
       setFormData({
-        storage_name: "",
-        storage_code: "",
+        transaction_proof_number: "",
+        transaction_invoice_number: "",
+        transaction_date: "",
+        transaction_due_date: "",
+        transaction_supplier_id: "",
+        PPN: "true",
+        transaction_note: ""
       });
+
+      setRows([])
     }
   }, [data]);
+
+
+
+  useEffect(() => {
+    // Initialize Bootstrap tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new window.bootstrap.Tooltip(tooltipTriggerEl);
+    });
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -68,16 +82,104 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
     });
   };
 
+
+
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    let data = formData;
 
-    fungsi(data, id);
-    handleClose(); // Close modal after form submission
+    let newData = rows.filter((e) => e.isNew
+    )
+
+    let product_id = []
+    let qty = []
+
+    newData.forEach((item) => {
+
+
+      product_id.push(item.Product.id)
+      qty.push(item.qty)
+    })
+
+    if (!data) {
+      if (!formData.transaction_date) {
+        Swal.fire('Error', 'Transaction Date is required!', 'error');
+        return;
+      }
+  
+      if (!formData.transaction_due_date) {
+        Swal.fire('Error', 'Transaction Due Date is required!', 'error');
+        return;
+      }
+  
+      if (!formData.transaction_supplier_id) {
+        Swal.fire('Error', 'Supplier is required!', 'error');
+        return;
+      }
+  
+      if (!formData.PPN) {
+        Swal.fire('Error', 'PPN is required!', 'error');
+        return;
+      }
+
+      let payload = {
+        product_id,
+        qty,
+        transaction_type: "buy",
+        transaction_date: formData.transaction_date,
+        transaction_due_date: formData.transaction_due_date,
+        transaction_supplier_id: formData.transaction_supplier_id,
+        transaction_note: formData.transaction_note,
+        PPN: formData.PPN
+      }
+
+      fungsi(payload).then(()=>{
+        handleClose()
+      })
+
+      setFormData({
+        transaction_proof_number: "",
+        transaction_invoice_number: "",
+        transaction_date: "",
+        transaction_due_date: "",
+        transaction_supplier_id: "",
+        PPN: "true",
+        transaction_note: ""
+      });
+
+      setRows([])
+    } else {
+
+
+
+      let payload = {
+        product_id,
+        qty,
+        transaction_type: "buy",
+        transaction_id: transaction_id
+      }
+
+
+      addProduct(payload)
+
+
+      let data = {
+        transaction_supplier_id: formData.transaction_supplier_id,
+        transaction_date: formData.transaction_date,
+        transaction_due_date: formData.transaction_due_date,
+        PPN: formData.PPN,
+        transaction_note: formData.transaction_note
+      }
+
+   
+      
+      editTransaction(data, transaction_id)
+    }
+
+    // handleClose(); // Close modal after form submission
   };
 
-  const handleDelete = (e) => {
-    e.preventDefault();
+  const handleDelete = (id) => {
     Swal.fire({
       title: "Apakah Anda yakin?",
       text: "Anda tidak akan dapat mengembalikannya!",
@@ -87,22 +189,148 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
       confirmButtonText: "Ya, hapus!",
     }).then((result) => {
       if (result.isConfirmed) {
-        deleteProduct(id);
 
+        deleteProduct(id); // Call your delete function here
       }
     });
   };
 
+
+  const handleDeleteTransaction = (id) => {
+    Swal.fire({
+      title: "Apakah Anda yakin?",
+      text: "Anda tidak akan dapat mengembalikannya!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Ya, hapus!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteTransaction(transaction_id)
+        // deleteProduct(id); // Call your delete function here
+      }
+    });
+  };
   async function deleteProduct(id) {
+
+
     try {
       const response = await axios({
         method: "DELETE",
-        url: `${process.env.REACT_APP_API_URL}/customers/${id}`,
+        url: `${process.env.REACT_APP_API_URL}/transactions/transaction-product/${id}`,
         headers: {
           authorization: localStorage.getItem("authorization"),
         },
       });
 
+
+      Swal.fire({
+        icon: "success",
+        title: "Save data",
+        text: response.data.message,
+      }).then(() => {
+        fungsi(transaction_id);
+      })
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async function addProduct(payload) {
+
+
+    try {
+      const response = await axios({
+        method: "POST",
+        url: `${process.env.REACT_APP_API_URL}/transactions/transaction-product`,
+        headers: {
+          authorization: localStorage.getItem("authorization"),
+        },
+        data: payload
+      });
+
+
+      Swal.fire({
+        icon: "success",
+        title: "Save data",
+        text: response.data.message,
+      }).then(() => {
+        fungsi(transaction_id);
+      })
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+
+  async function fetchSuppliers() {
+    try {
+      const response = await axios({
+        method: "GET",
+        url: `${process.env.REACT_APP_API_URL}/suppliers`,
+        headers: {
+          authorization: localStorage.getItem("authorization"),
+        },
+      });
+
+      setSuppliers(response.data)
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async function fetchProducts() {
+    try {
+      const response = await axios({
+        method: "GET",
+        url: `${process.env.REACT_APP_API_URL}/products`,
+        headers: {
+          authorization: localStorage.getItem("authorization"),
+        },
+      });
+
+
+      setProducts(response.data.data)
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async function editTransaction(data, id) {
+
+
+    try {
+      const response = await axios({
+        method: "PUT",
+        url: `${process.env.REACT_APP_API_URL}/transactions/${id}`,
+        headers: {
+          authorization: localStorage.getItem("authorization"),
+        },
+        data: data,
+      });
+
+      Swal.fire({
+        icon: "success",
+        title: "Save data",
+        text: response.data.message,
+      })
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async function deleteTransaction(id) {
+
+
+    try {
+      const response = await axios({
+        method: "DELETE",
+        url: `${process.env.REACT_APP_API_URL}/transactions/${id}`,
+        headers: {
+          authorization: localStorage.getItem("authorization"),
+        },
+        data: data,
+      });
 
       Swal.fire({
         icon: "success",
@@ -116,104 +344,180 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
     }
   }
 
-  async function fetchArea() {
-    try {
-      const response = await axios({
-        method: "GET",
-        url: `${process.env.REACT_APP_API_URL}/areas`,
-        headers: {
-          authorization: localStorage.getItem("authorization"),
-        },
-      });
+  const handleAddRow = async () => {
+    const newProduct = {
+      id: Date.now(), // Unique identifier for the new row
+      Product: {
+        id: '',
+        part_number: '',
+        name: '',
+        unit_code: ''
+      },
+      qty: 1,
+      current_cost: 0,
+      isNew: true // Mark the row as new
+    };
 
-      setArea(response.data)
-    } catch (error) {
-      console.log(error);
-    }
-  }
-  async function fetchExpeditions() {
-    try {
-      const response = await axios({
-        method: "GET",
-        url: `${process.env.REACT_APP_API_URL}/expeditions`,
-        headers: {
-          authorization: localStorage.getItem("authorization"),
-        },
-      });
+    // Add the new row locally
+    setRows([...rows, newProduct]);
 
-      setExpedition(response.data)
-    } catch (error) {
-      console.log(error);
-    }
-  }
+
+
+
+
+
+  };
+
+
+  const deleteRowLocally = (index) => {
+    const updatedRows = [...rows]; // Make a copy of the rows
+    updatedRows.splice(index, 1); // Remove the row at the given index
+    setRows(updatedRows); // Update the state with the new rows
+  };
+
+
+  // Handle updating the selected barang in the row
+  const handleBarangChange = (index, selectedBarang) => {
+    const newRows = [...rows];
+    newRows[index].Product = selectedBarang;
+    newRows[index].current_cost = selectedBarang.cost;
+    setRows(newRows);
+  };
+
+
+  const calculateTotalAmount = (rows) => {
+    return rows.reduce((totals, row) => {
+      const quantity = parseInt(row.qty, 10) || 0; // Convert qty to integer, fallback to 0 if invalid
+      const cost = row.current_cost || 0; // Ensure cost is a valid number
+
+      totals.totalQty += quantity;
+      totals.totalCost += quantity * cost; // Calculate total cost based on quantity
+      totals.PPN = totals.totalCost * 0.1; // 10% tax
+      totals.netto = totals.totalCost + totals.PPN;
+
+      // Formatting to add Rp. and using toLocaleString() for proper formatting
+      totals.totalCostFormatted = `Rp. ${totals.totalCost.toLocaleString('id-ID')}`;
+      totals.PPNFormatted = `Rp. ${totals.PPN.toLocaleString('id-ID')}`;
+      totals.nettoFormatted = `Rp. ${totals.netto.toLocaleString('id-ID')}`;
+
+      return totals;
+    }, { totalQty: 0, totalCost: 0, PPN: 0, netto: 0 }); // Initial values
+  };
+
+  // Example usage:
+  const totals = calculateTotalAmount(rows);
+
+
+
 
 
 
   return (
     <Modal show={showModal} onHide={handleClose} size="xl">
       <Modal.Header>
-        <Modal.Title>{data ? "Pembelian Form" : "Pembelian Form"}</Modal.Title>
-        <button className="btn btn-link" onClick={handleDelete}>
-          {data ? (
-            <i className="fas fa-trash" style={{ color: "red" }}>
-              {" "}
-            </i>
-          ) : (
-            <></>
-          )}
-        </button>
+        <Modal.Title>{data ? 'Pembelian Form' : 'Pembelian Form'}</Modal.Title>
+
+        <div>
+          <button
+            className="btn btn-link"
+            onClick={handleAddRow} // Add row when clicked
+            data-bs-toggle="tooltip"
+            data-bs-placement="top"
+            title="Tambah Barang"
+          >
+            <i className="fas fa-plus" style={{ color: 'green', fontSize: '24px' }}></i>
+          </button>
+          <button
+            className="btn btn-link"
+            onClick={handleDeleteTransaction}
+            data-bs-toggle="tooltip"
+            data-bs-placement="top"
+            title="Hapus Transaksi"
+          >
+            <i className="fas fa-trash" style={{ color: 'red', fontSize: '24px' }}></i>
+          </button>
+        </div>
       </Modal.Header>
+
       <Modal.Body>
         <div className="container">
           {/* Form section */}
           <div className="form-section row g-3">
             <div className="col-md-4">
               <label htmlFor="noBukti" className="form-label">No. Bukti#</label>
-              <input type="text" className="form-control" id="noBukti" defaultValue="FB 24/04/000215" style={{ width: '100%' }} />
+              <input type="text" className="form-control" name="transaction_proof_number" value={formData.transaction_proof_number} onChange={handleChange} readOnly style={{ width: '100%' }} />
             </div>
             <div className="col-md-3 test1">
               <div className="form-check stock">
-                <input className="form-check-input" type="checkbox" id="pembelianStok" />
+                <input className="form-check-input" type="checkbox" name="transaction_type" checked readOnly />
                 <label className="form-check-label" htmlFor="pembelianStok">Pembelian Stok</label>
               </div>
             </div>
             <div className="col-md-4">
               <label htmlFor="supplier" className="form-label">Supplier</label>
-              <select className="form-select" id="supplier" style={{ width: '100%', height: "55%" }}>
-                <option value="[S0002]">[S0002] MITRA FILTER</option>
+              <select
+                className="form-select"
+                name="transaction_supplier_id"
+                onChange={handleChange}
+                value={formData.transaction_supplier_id}
+                style={{ width: '100%', height: '55%' }}
+              >
+                <option value="">Select Supplier</option> {/* Default option */}
+                {suppliers.length > 0 ? (
+                  suppliers.map((supplier) => (
+                    <option key={supplier.id} value={supplier.id}>
+                      {supplier.supplier_name}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>No suppliers available</option>
+                )}
               </select>
             </div>
 
+
             <div className="col-md-3 mt-2">
               <label htmlFor="tanggal" className="form-label">Tanggal</label>
-              <input type="date" className="form-control" id="tanggal" style={{ width: '100%', height: "55%" }} />
+              <input type="date" className="form-control" name="transaction_date" value={formData.transaction_date} onChange={handleChange} style={{ width: '100%', height: "55%" }} />
             </div>
 
             <div className="col-md-3 mt-2">
               <label htmlFor="tanggal" className="form-label">Tgl. Tempo</label>
-              <input type="date" className="form-control" id="tanggalTempo" style={{ width: '100%', height: "55%" }} />
+              <input type="date" className="form-control" value={formData.transaction_due_date} onChange={handleChange} name="transaction_due_date" style={{ width: '100%', height: "55%" }} />
             </div>
             <div className="col-md-3 mt-2">
               <div>
                 <label htmlFor="noInvoice" className="form-label">No. Invoice</label>
-                <input type="text" className="form-control" id="noInvoice" />
+                <input type="text" className="form-control" id="noInvoice" readOnly value={data ?
+                  data.transaction_invoice_number : ""
+                } />
               </div>
 
             </div>
 
             <div className="col-md-3 mt-2">
               <label htmlFor="supplier" className="form-label">PPn</label>
-              <select className="form-select" id="supplier" style={{ width: '100%', height: "55%" }}>
-                <option value="True">PPn</option>
-                <option value="False">Non PPn</option>
+              <select
+                className="form-select"
+                name="PPN"
+                style={{ width: '100%', height: '55%' }}
+                value={formData.PPN} // Ensure formData.PPN defaults to "true"
+                onChange={(e) =>
+                  handleChange({ target: { name: 'PPN', value: e.target.value } })
+                }
+              >
+                <option value="" disabled>Select Ppn</option> {/* Default option */}
+                <option value="true">PPn</option>
+                <option value="false">Non PPn</option>
               </select>
             </div>
+
           </div>
 
-          <div class="table-container mt-3">
-            <table class="table table-bordered table-striped">
+          <div className="table-container mt-3">
+            <table className="table table-bordered table-striped">
               <thead>
-                <tr class="table-warning">
+                <tr className="table-warning">
                   <th>No.</th>
                   <th>Kode Barang</th>
                   <th>Nama Barang</th>
@@ -221,142 +525,152 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                   <th>Satuan</th>
                   <th>Cost</th>
                   <th>Amount</th>
-                  <th class="notes-col">Notes</th>
+                  <th className="notes-col">Action</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>1</td>
-                  <td>P55-4005</td>
-                  <td>OIL FILTER</td>
-                  <td>12</td>
-                  <td>PCS</td>
-                  <td>148,650</td>
-                  <td>1,783,800</td>
-                  <td></td>
-                </tr>
-                <tr>
-                  <td>2</td>
-                  <td>FC-52040</td>
-                  <td>FUEL FILTER</td>
-                  <td>12</td>
-                  <td>PCS</td>
-                  <td>128,200</td>
-                  <td>1,538,400</td>
-                  <td></td>
-                </tr>
-                <tr>
-                  <td>3</td>
-                  <td>F-1004</td>
-                  <td>FUEL FILTER</td>
-                  <td>12</td>
-                  <td>PCS</td>
-                  <td>23,425</td>
-                  <td>281,100</td>
-                  <td></td>
-                </tr>
-                <tr>
-                  <td>4</td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                </tr>
+                {rows.length > 0 ? (
+                  rows.map((item, index) => (
+                    <tr key={index}>
+                      <td>{index + 1}</td>
+                      <td>
+                        {/* Show a dropdown only for new rows */}
+                        {item.isNew ? (
+                          <select
+                            value={item.Product.id || ''}
+                            onChange={(e) =>
+                              handleBarangChange(
+                                index,
+                                products.find((b) => b.id === Number(e.target.value))
+                              )
+                            }
+                          >
+                            <option value="">Pilih Barang</option>
+                            {products.map((barang) => (
+                              <option key={barang.id} value={barang.id}>
+                                {barang.part_number}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          // Show text for existing rows
+                          item.Product.part_number
+                        )}
+                      </td>
+                      <td>{item.isNew ? item.Product.name : item.Product.name}</td>
+                      <td>
+                        {item.isNew ? (
+                          <input
+                            type="number"
+                            value={item.qty}
+                            onChange={(e) =>
+                              setRows((prevRows) => {
+                                const updatedRows = [...prevRows];
+                                updatedRows[index].qty = e.target.value;
+                                return updatedRows;
+                              })
+                            }
+                            min="1"
+                          />
+                        ) : (
+                          // Show text for existing rows
+                          item.qty
+                        )}
+                      </td>
+                      <td>{item.Product.unit_code || ''}</td>
+                      <td>{item.current_cost.toLocaleString()}</td>
+                      <td>{(item.qty * item.current_cost).toLocaleString()}</td>
+                      <td>
+                        {index === 0 ? (
+                          <span></span> // No trash can for the first item
+                        ) : (
+                          data && rows.length > 1 && !item.isNew ? (
+                            <button
+                              className="btn btn-link d-flex flex-column align-items-center justify-content-start"
+                              onClick={() => handleDelete(item.id)} // Calls API to delete
+                            >
+                              <i className="fas fa-trash" style={{ color: 'blue',marginTop: '-5px' }}></i>
+                            </button>
+                          ) : (
+                            rows.length > 1 && (
+                              <button
+                                className="btn btn-link d-flex flex-column align-items-center justify-content-start"
+                                onClick={() => deleteRowLocally(index)} // Deletes row locally
+                              >
+                                <i className="fas fa-trash" style={{ color: 'red', marginTop: '-5px' }}></i>
+                              </button>
+                            )
+                          )
+                        )}
+                      </td>
+
+
+
+
+
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="8" style={{ textAlign: 'center' }}>
+                      No data available
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
         </div>
 
-        <footer class="container mr-1">
+        <footer className="container mr-1">
 
-          <div className="container">
-            <div className="row g-1">
-
-
-              <div className="col-md-2-custom d-flex align-items-center">
-                <label htmlFor="totalAmount" className="form-label mb-0">Total Amount</label>
+          <div className="container mt-5">
+            <div className="row">
+              <div className="col-md-8">
+                <table className="table table-bordered">
+                  <tbody>
+                    <tr>
+                      <td>Total Amount</td>
+                      <td><input type="text" className="form-control" value={data ? "Rp." + data.total_amount.toLocaleString() : totals.totalCostFormatted} readOnly /></td>
+                    </tr>
+                    <tr>
+                      <td>Disc</td>
+                      <td><input type="text" className="form-control" defaultValue={0} /></td>
+                    </tr>
+                    <tr>
+                      <td>Total (DPP)</td>
+                      <td><input type="text" className="form-control" value={data ? "Rp." + data.total_dpp.toLocaleString() : totals.totalCostFormatted} readOnly /></td>
+                    </tr>
+                    <tr>
+                      <td>Total PPN</td>
+                      <td><input type="text" className="form-control" value={data ? "Rp." + data.total_ppn.toLocaleString() : totals.PPNFormatted} readOnly /></td>
+                    </tr>
+                    <tr>
+                      <td>Total Netto</td>
+                      <td><input type="text" className="form-control" value={data ? "Rp." + data.total_netto.toLocaleString() : totals.nettoFormatted} readOnly /></td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
               <div className="col-md-4">
-                <div className="input-group">
-                  <span className="input-group-text mr-1">Rp.</span>
-                  <input type="text" className="form-control" id="totalAmount" />
+                <div className="form-group">
+                  <label htmlFor="totalQty">Total Qty</label>
+                  <input type="text" className="form-control" id="totalQty" value={data ? data.total_qty : totals.totalQty} readOnly />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="notes">Notes</label>
+                  <textarea className="form-control" name="transaction_note" rows={5} value={formData.transaction_note} onChange={handleChange} />
                 </div>
               </div>
-
-
-              <div className="col-md-2-custom d-flex align-items-center test">
-                <label htmlFor="totalQuantity" className="form-label mb-0">Total Quantity</label>
-              </div>
-              <div className="col-md-3 d-flex align-items-center">
-                <input type="text" className="form-control" id="totalQuantity" />
-              </div>
-
-
-            </div>
-
-            <div className="row g-1 mt-2">
-              <div className="col-md-2-custom d-flex align-items-center">
-                <label htmlFor="totalAmount" className="form-label mb-0">Disc</label>
-              </div>
-              <div className="col-md-1">
-                <div className="input-group">
-                  <input type="text" className="form-control mr-1" id="discAmount" />
-                  <span className="input-group-text">%</span>
-                </div>
-              </div>
-              <div className="col-md-3-custom test2">
-                <input type="text" className="form-control" id="totalAmount" />
-              </div>
-            </div>
-
-            <div className="row g-1 mt-2">
-              <div className="col-md-2-custom d-flex align-items-center">
-                <label htmlFor="totalAmount" className="form-label mb-0">Total DPP</label>
-              </div>
-              <div className="col-md-4">
-                <div className="input-group">
-                  <span className="input-group-text mr-1">Rp.</span>
-                  <input type="text" className="form-control" id="totalAmount" />
-                </div>
-              </div>
-            </div>
-
-
-            <div className="row g-1 mt-2">
-              <div className="col-md-2-custom d-flex align-items-center">
-                <label htmlFor="totalAmount" className="form-label mb-0">Total PPn</label>
-              </div>
-              <div className="col-md-4">
-                <div className="input-group">
-                  <span className="input-group-text mr-1">Rp.</span>
-                  <input type="text" className="form-control" id="totalAmount" />
-                </div>
-              </div>
-            </div>
-
-            <div className="row g-1 mt-2">
-              <div className="col-md-2-custom d-flex align-items-center">
-                <label htmlFor="totalAmount" className="form-label mb-0">Total Netto</label>
-              </div>
-              <div className="col-md-4">
-                <div className="input-group">
-                  <span className="input-group-text mr-1">Rp.</span>
-                  <input type="text" className="form-control" id="totalAmount" />
-                </div>
-              </div>
-
-
             </div>
           </div>
+
 
           <div className="text-right mb-3 mt-3">
             <Button variant="secondary" className="mr-2" onClick={handleClose}>
               Close
             </Button>
-            <Button variant="primary" type="submit">
+            <Button variant="primary" type="submit" onClick={handleSubmit}>
               Save
             </Button>
           </div>
@@ -381,6 +695,7 @@ const TransactionBuy = () => {
     setShowModal(false);
   };
   const handleShow = (productId) => {
+
     if (productId === "tambahPembelian") {
       setProductById(null);
     } else {
@@ -423,28 +738,7 @@ const TransactionBuy = () => {
     }
   }
 
-  async function editTransaction(data, id) {
-    try {
-      const response = await axios({
-        method: "PUT",
-        url: `${process.env.REACT_APP_API_URL}/transactions/${id}`,
-        headers: {
-          authorization: localStorage.getItem("authorization"),
-        },
-        data: data,
-      });
 
-      Swal.fire({
-        icon: "success",
-        title: "Save data",
-        text: response.data.message,
-      }).then(() => {
-        fetchTransactions();
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  }
 
   async function addTransaction(data) {
     try {
@@ -471,8 +765,8 @@ const TransactionBuy = () => {
   const columns = [
     { field: "transaction_proof_number", headerName: "No. Bukti", flex: 2 },
     { field: "transaction_invoice_number", headerName: "No. Invoice", flex: 1 },
-    { field: "transaction_date", headerName: "Tanggal Pembelian", flex: 2 },
-    { field: "transaction_due_date", headerName: "Tgl. tempo", flex: 1 },
+    { field: "transaction_date", headerName: "Tanggal Pembelian", flex: 2, },
+    { field: "transaction_due_date", headerName: "Tgl. tempo", flex: 1, },
     { field: "Supplier", headerName: "Supplier", flex: 1, valueGetter: (params) => params.supplier_name },
     {
       field: "PPN",
@@ -536,7 +830,7 @@ const TransactionBuy = () => {
                       showModal={showModal}
                       handleClose={handleClose}
                       data={productById}
-                      fungsi={productById ? editTransaction : addTransaction}
+                      fungsi={productById ? fetchTransactionById : addTransaction}
                     />
                   </div>
                 </div>
