@@ -522,7 +522,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
             </div>
             <div className="col-md-2 mt-2">
               <div className="form-check stock">
-                <input className="form-check-input" type="checkbox" name="transaction_type" checked readOnly />
+                <input className="form-check-input custom-checkbox" type="checkbox" name="transaction_type" checked readOnly />
                 <label className="form-check-label mb-2" htmlFor="pembelianStok">Pembelian Stok</label>
               </div>
             </div>

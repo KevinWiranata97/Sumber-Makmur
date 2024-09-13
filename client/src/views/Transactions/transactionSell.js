@@ -576,7 +576,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
             <div className="col-md-2 mt-2">
               <div className="form-check stock">
-                <input className="form-check-input" type="checkbox" name="transaction_type" />
+                <input className="form-check-input custom-checkbox" type="checkbox" name="transaction_type" />
                 <label className="form-check-label mb-2" htmlFor="pembelianStok">Cetak Surat Jalan</label>
               </div>
             </div>
@@ -858,13 +858,14 @@ const TransactionSell = () => {
   const columns = [
     { field: "transaction_proof_number", headerName: "No. Bukti", flex: 2 },
     { field: "transaction_invoice_number", headerName: "No. Invoice", flex: 1 },
-    { field: "transaction_date", headerName: "Tanggal Pembelian", flex: 2, },
-    { field: "transaction_due_date", headerName: "Tgl. tempo", flex: 1, },
+    { field: "transaction_date", headerName: "Tanggal Pembelian", flex: 2 },
+    { field: "transaction_due_date", headerName: "Tgl. tempo", flex: 1 },
     { field: "Customer", headerName: "Customer", flex: 1, valueGetter: (params) => params.customer_name },
     {
       field: "PPN",
       headerName: "PPN",
       flex: 1,
+  
       renderCell: (params) => (
         <Checkbox
           checked={!!params.value} // Convert to boolean if necessary
@@ -874,6 +875,7 @@ const TransactionSell = () => {
     }
     // Add more columns as needed
   ];
+  
 
   useEffect(() => {
     fetchTransactions();

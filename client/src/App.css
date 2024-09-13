@@ -193,4 +193,31 @@ input, textarea, select {
 input::placeholder {
   color: #6c757d;
 }
-/* Reset checkbox style */
+/* Apply styles only to checkboxes with the class 'custom-checkbox' */
+.custom-checkbox {
+  appearance: none; /* Reset the default appearance */
+  width: 20px;      /* Adjust size */
+  height: 20px;     /* Adjust size */
+  background-color: #fff; /* White background */
+  border: 2px solid #007bff; /* Border color to match your theme */
+  border-radius: 3px; /* Optional: Rounded corners */
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+}
+
+/* Checkmark style */
+.custom-checkbox:checked::before {
+  content: "✔"; /* Display a checkmark */
+  color: #007bff; /* Checkmark color */
+  font-size: 18px;
+  position: absolute;
+  left: 2px;
+  top: -2px;
+}
+
+/* Ensure labels are correctly aligned with checkboxes */
+.custom-checkbox + label {
+  margin-left: 10px;
+  vertical-align: middle;
+}
