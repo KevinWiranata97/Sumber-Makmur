@@ -50,3 +50,147 @@
       max-width: 25%;
   }
 }
+
+/* General Sidebar Styling */
+.sidebar {
+  background-color: #f7f9fc !important; /* Light background */
+  padding-top: 20px;
+}
+
+.main-sidebar .nav-link {
+  color: #4a4a4a !important; /* Darker text color for links */
+  font-size: 16px; /* Slightly larger font size */
+  font-weight: 500; /* Medium weight for a clean look */
+}
+
+.main-sidebar .nav-link.active {
+  background-color: #007bff !important; /* Active link background (blue) */
+  color: white !important;
+  border-radius: 5px; /* Add rounded corners to active items */
+}
+
+.main-sidebar .nav-icon {
+  font-size: 18px; /* Slightly larger icon size */
+  margin-right: 10px;
+}
+
+.nav-pills .nav-item {
+  margin-bottom: 10px; /* Space between nav items */
+}
+
+/* Sidebar Search Styling */
+.form-control-sidebar {
+  background-color: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+}
+
+.input-group .btn-sidebar {
+  background-color: #007bff;
+  border: none;
+  color: #fff;
+}
+
+input.form-control-sidebar::placeholder {
+  color: #6c757d;
+}
+
+/* Sidebar Header/Logo */
+.sidebar .d-flex img {
+  border-radius: 8px;
+  padding-bottom: 10px;
+}
+
+/* User Panel */
+.user-panel {
+  border-bottom: 1px solid #e4e4e4;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+
+}
+
+/* Import Montserrat font */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+/* General page styling */
+body, p, a, h1, h2, h3, table, input, button {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 16px;
+  color: #2c2c2c; /* Darker, striking text color */
+}
+
+h1, h2, h3, .table-header {
+  font-weight: 700; /* Bolder headers */
+  color: #333; /* Stronger color for headers */
+}
+
+/* Table styling */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  margin: 20px 0;
+  border: 2px solid #e0e0e0; /* Stronger border */
+  border-radius: 8px; /* Rounded corners */
+}
+
+th, td {
+  text-align: left;
+  padding: 14px 18px; /* More padding for a bolder look */
+  border-bottom: 2px solid #e0e0e0; /* Thicker row borders */
+}
+
+th {
+  background-color: #f4f4f4;
+  font-weight: 600; /* Bold header text */
+  color: #333; /* Stronger header color */
+  font-size: 18px; /* Slightly larger font size */
+}
+
+td {
+  font-weight: 500;
+  font-size: 16px;
+  color: #2c2c2c; /* Stronger text color */
+}
+
+table tr:nth-child(even) {
+  background-color: #f9f9f9; /* Alternating row color */
+}
+
+table tr:hover {
+  background-color: #fffbdd; /* Stronger hover effect */
+}
+
+/* Button styling */
+button {
+  font-family: 'Montserrat', sans-serif;
+  background-color: #ff5722; /* Bold orange color */
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px; /* Rounded button */
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600; /* Bold button text */
+  transition: background-color 0.2s ease-in-out;
+}
+
+button:hover {
+  background-color: #e64a19; /* Darker shade for hover */
+}
+
+/* Input styling */
+input, textarea, select {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 16px;
+  color: #2c2c2c;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 10px;
+  width: 100%;
+}
+
+input::placeholder {
+  color: #6c757d;
+}
+/* Reset checkbox style */

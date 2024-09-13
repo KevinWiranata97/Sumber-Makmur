@@ -6,62 +6,56 @@ import { useState, useEffect } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 import Swal from "sweetalert2";
 import { Checkbox } from '@mui/material';
+import { ThemeProvider } from '@mui/material/styles';
+import theme from "../../components/theme";
 const MyModal = ({ showModal, handleClose, data, fungsi }) => {
-
-  // console.log(data, ">>>>>>");
-  // console.log(data.Transaction_Products.length);
-
-  // const [dataRender, setDataRender] = useState([])
-
-  // if(data){
-  //   setDataRender(data)
-  // }
 
 
 
   const [transaction_id, setTransactionId] = useState();
-  const [suppliers, setSuppliers] = useState([])
+  const [customers, setCustomer] = useState([])
+  const [expeditions, setExpeditions] = useState([])
   const [products, setProducts] = useState([])
   const [rows, setRows] = useState([]);
-
+  const [customerDisc, setCustomerDisc] = useState(0)
+  const [customerExpedition, setCustomerExpedition] = useState(0)
   const [formData, setFormData] = useState({
     transaction_proof_number: "",
     transaction_invoice_number: "",
     transaction_date: "",
     transaction_due_date: "",
-    transaction_supplier_id: "",
+    transaction_customer_id: "",
     PPN: "true",
-    transaction_note: ""
+    transaction_note: "",
+    customer_expedition_id:""
   });
 
-
-
-
-
-
   useEffect(() => {
-    fetchSuppliers()
+    fetchCustomers()
     fetchProducts()
-
+    fetchExpeditions()
     // fetchTransactionById(28)
     if (data) {
       setFormData(data);
       setTransactionId(data.id);
       setRows(data.Transaction_Products);
+      setCustomerExpedition(data.Customer.customer_expedition_id)
     } else {
       setFormData({
         transaction_proof_number: "",
         transaction_invoice_number: "",
         transaction_date: "",
         transaction_due_date: "",
-        transaction_supplier_id: "",
+        transaction_customer_id: "",
         PPN: "true",
-        transaction_note: ""
+        transaction_note: "",
+     
       });
-
+      setCustomerExpedition("")
       setRows([])
     }
   }, [data]);
+
 
 
 
@@ -76,10 +70,22 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
+  
+    
     setFormData({
       ...formData,
       [name]: value,
     });
+
+    const selectedCustomer = customers.find((customer) => customer.id === parseInt(value));
+
+    // If customer is found, set the discount
+    if (selectedCustomer) {
+      setCustomerDisc(selectedCustomer.customer_discount);
+      setCustomerExpedition(selectedCustomer.customer_expedition_id) // Assuming the discount field is 'customer_discount'
+    }
+
+
   };
 
 
@@ -103,37 +109,46 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
     if (!data) {
       if (!formData.transaction_date) {
-        Swal.fire('Error', 'Transaction Date is required!', 'error');
+        Swal.fire('Kesalahan', 'Tanggal Transaksi wajib diisi!', 'error');
         return;
       }
-  
+
       if (!formData.transaction_due_date) {
-        Swal.fire('Error', 'Transaction Due Date is required!', 'error');
+        Swal.fire('Kesalahan', 'Tanggal Jatuh Tempo wajib diisi!', 'error');
         return;
       }
-  
-      if (!formData.transaction_supplier_id) {
-        Swal.fire('Error', 'Supplier is required!', 'error');
+
+      if (!formData.transaction_customer_id) {
+        Swal.fire('Kesalahan', 'Customer wajib diisi!', 'error');
         return;
       }
-  
+
       if (!formData.PPN) {
-        Swal.fire('Error', 'PPN is required!', 'error');
+        Swal.fire('Kesalahan', 'PPN wajib diisi!', 'error');
+        return;
+      }
+      if (rows.length < 1) {
+        Swal.fire('Kesalahan', 'Tambah setidaknya 1 barang!', 'error');
+        return;
+      }
+
+      if (!rows[0].Product.name) {
+        Swal.fire('Kesalahan', 'Tidak ada barang terpilih', 'error');
         return;
       }
 
       let payload = {
         product_id,
         qty,
-        transaction_type: "buy",
+        transaction_type: "sell",
         transaction_date: formData.transaction_date,
         transaction_due_date: formData.transaction_due_date,
-        transaction_supplier_id: formData.transaction_supplier_id,
+        transaction_customer_id: formData.transaction_customer_id,
         transaction_note: formData.transaction_note,
         PPN: formData.PPN
       }
 
-      fungsi(payload).then(()=>{
+      fungsi(payload).then(() => {
         handleClose()
       })
 
@@ -142,9 +157,10 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
         transaction_invoice_number: "",
         transaction_date: "",
         transaction_due_date: "",
-        transaction_supplier_id: "",
+        transaction_customer_id: "",
         PPN: "true",
-        transaction_note: ""
+        transaction_note: "",
+        transaction_expedition_id:""
       });
 
       setRows([])
@@ -155,7 +171,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
       let payload = {
         product_id,
         qty,
-        transaction_type: "buy",
+        transaction_type: "sell",
         transaction_id: transaction_id
       }
 
@@ -164,15 +180,16 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
 
       let data = {
-        transaction_supplier_id: formData.transaction_supplier_id,
+        transaction_customer_id: formData.transaction_customer_id,
         transaction_date: formData.transaction_date,
         transaction_due_date: formData.transaction_due_date,
+        customer_expedition_id: customerExpedition,
         PPN: formData.PPN,
         transaction_note: formData.transaction_note
       }
 
    
-      
+
       editTransaction(data, transaction_id)
     }
 
@@ -263,17 +280,35 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
   }
 
 
-  async function fetchSuppliers() {
+  async function fetchCustomers() {
     try {
       const response = await axios({
         method: "GET",
-        url: `${process.env.REACT_APP_API_URL}/suppliers`,
+        url: `${process.env.REACT_APP_API_URL}/customers`,
         headers: {
           authorization: localStorage.getItem("authorization"),
         },
       });
 
-      setSuppliers(response.data)
+
+      setCustomer(response.data.data)
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  async function fetchExpeditions() {
+    try {
+      const response = await axios({
+        method: "GET",
+        url: `${process.env.REACT_APP_API_URL}/expeditions`,
+        headers: {
+          authorization: localStorage.getItem("authorization"),
+        },
+      });
+
+      
+      
+      setExpeditions(response.data)
     } catch (error) {
       console.log(error);
     }
@@ -389,13 +424,15 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
     return rows.reduce((totals, row) => {
       const quantity = parseInt(row.qty, 10) || 0; // Convert qty to integer, fallback to 0 if invalid
       const cost = row.current_cost || 0; // Ensure cost is a valid number
-
+      // Calculate discount based on percentage
       totals.totalQty += quantity;
       totals.totalCost += quantity * cost; // Calculate total cost based on quantity
+      totals.total_discount = totals.totalCost * (customerDisc / 100);
       totals.PPN = totals.totalCost * 0.1; // 10% tax
-      totals.netto = totals.totalCost + totals.PPN;
+      totals.netto = totals.totalCost + totals.PPN - totals.total_discount;
 
       // Formatting to add Rp. and using toLocaleString() for proper formatting
+      totals.total_discountFormatted = `Rp. ${totals.total_discount.toLocaleString('id-ID')}`;
       totals.totalCostFormatted = `Rp. ${totals.totalCost.toLocaleString('id-ID')}`;
       totals.PPNFormatted = `Rp. ${totals.PPN.toLocaleString('id-ID')}`;
       totals.nettoFormatted = `Rp. ${totals.netto.toLocaleString('id-ID')}`;
@@ -415,7 +452,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
   return (
     <Modal show={showModal} onHide={handleClose} size="xl">
       <Modal.Header>
-        <Modal.Title>{data ? 'Pembelian Form' : 'Pembelian Form'}</Modal.Title>
+        <Modal.Title>{data ? 'Penjualan Form' : 'Penjualan Form'}</Modal.Title>
 
         <div>
           <button
@@ -447,56 +484,64 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
               <label htmlFor="noBukti" className="form-label">No. Bukti#</label>
               <input type="text" className="form-control" name="transaction_proof_number" value={formData.transaction_proof_number} onChange={handleChange} readOnly style={{ width: '100%' }} />
             </div>
-            <div className="col-md-3 test1">
-              <div className="form-check stock">
-                <input className="form-check-input" type="checkbox" name="transaction_type" checked readOnly />
-                <label className="form-check-label" htmlFor="pembelianStok">Pembelian Stok</label>
-              </div>
-            </div>
+
             <div className="col-md-4">
-              <label htmlFor="supplier" className="form-label">Supplier</label>
+              <label htmlFor="customer" className="form-label">Customer</label>
               <select
                 className="form-select"
-                name="transaction_supplier_id"
+                name="transaction_customer_id"
                 onChange={handleChange}
-                value={formData.transaction_supplier_id}
+                value={formData.transaction_customer_id}
                 style={{ width: '100%', height: '55%' }}
               >
-                <option value="">Select Supplier</option> {/* Default option */}
-                {suppliers.length > 0 ? (
-                  suppliers.map((supplier) => (
-                    <option key={supplier.id} value={supplier.id}>
-                      {supplier.supplier_name}
+                <option   value="">Pilih Customer</option> {/* Default option */}
+                {customers.length > 0 ? (
+                  customers.map((customer) => (
+                    <option key={customer.id} value={customer.id}>
+                      {customer.customer_name}
                     </option>
                   ))
                 ) : (
-                  <option disabled>No suppliers available</option>
+                  <option disabled>No customers available</option>
                 )}
               </select>
             </div>
 
 
-            <div className="col-md-3 mt-2">
-              <label htmlFor="tanggal" className="form-label">Tanggal</label>
+            <div className="col-md-4 mt-2">
+              <label htmlFor="tanggal" className="form-label">Tgl. Transaksi</label>
               <input type="date" className="form-control" name="transaction_date" value={formData.transaction_date} onChange={handleChange} style={{ width: '100%', height: "55%" }} />
             </div>
 
-            <div className="col-md-3 mt-2">
+            <div className="col-md-4 mt-2">
               <label htmlFor="tanggal" className="form-label">Tgl. Tempo</label>
               <input type="date" className="form-control" value={formData.transaction_due_date} onChange={handleChange} name="transaction_due_date" style={{ width: '100%', height: "55%" }} />
             </div>
-            <div className="col-md-3 mt-2">
-              <div>
-                <label htmlFor="noInvoice" className="form-label">No. Invoice</label>
-                <input type="text" className="form-control" id="noInvoice" readOnly value={data ?
-                  data.transaction_invoice_number : ""
-                } />
-              </div>
 
+            <div className="col-md-4">
+              <label htmlFor="customer" className="form-label">Expedisi</label>
+              <select
+                className="form-select"
+                name="customer_expedition_id"
+                onChange={(e) => setCustomerExpedition(e.target.value)}
+                value={customerExpedition}
+                style={{ width: '100%', height: '55%' }}
+              >
+                <option value="">Pilih Expedisi</option> {/* Default option */}
+                {customers.length > 0 ? (
+                  expeditions.map((expedition) => (
+                    <option key={expedition.id} value={expedition.id}>
+                      {expedition.expedition_name}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>Tidak ada ekspedisi tersedia</option>
+                )}
+              </select>
             </div>
 
-            <div className="col-md-3 mt-2">
-              <label htmlFor="supplier" className="form-label">PPn</label>
+            <div className="col-md-4 mt-2">
+              <label htmlFor="customer" className="form-label">PPn</label>
               <select
                 className="form-select"
                 name="PPN"
@@ -510,6 +555,30 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                 <option value="true">PPn</option>
                 <option value="false">Non PPn</option>
               </select>
+            </div>
+
+
+            <div className="col-md-4 mt-2">
+              <label htmlFor="tanggal" className="form-label">No. PO</label>
+              <input type="text" className="form-control" id="noInvoice" readOnly value={data ?
+                data.transaction_PO_num : ""
+              } />
+            </div>
+            <div className="col-md-4 mt-2">
+              <div>
+                <label htmlFor="noInvoice" className="form-label">No. Surat Jalan</label>
+                <input type="text" className="form-control" id="noInvoice" readOnly value={data ?
+                  data.transaction_surat_jalan : ""
+                } />
+              </div>
+
+            </div>
+
+            <div className="col-md-2 mt-2">
+              <div className="form-check stock">
+                <input className="form-check-input" type="checkbox" name="transaction_type" />
+                <label className="form-check-label mb-2" htmlFor="pembelianStok">Cetak Surat Jalan</label>
+              </div>
             </div>
 
           </div>
@@ -588,14 +657,16 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                             <button
                               className="btn btn-link d-flex flex-column align-items-center justify-content-start"
                               onClick={() => handleDelete(item.id)} // Calls API to delete
+                              title="Hapus Barang"
                             >
-                              <i className="fas fa-trash" style={{ color: 'blue',marginTop: '-5px' }}></i>
+                              <i className="fas fa-trash" style={{ color: 'blue', marginTop: '-5px' }}></i>
                             </button>
                           ) : (
                             rows.length > 1 && (
                               <button
                                 className="btn btn-link d-flex flex-column align-items-center justify-content-start"
                                 onClick={() => deleteRowLocally(index)} // Deletes row locally
+                                title="Hapus Barang"
                               >
                                 <i className="fas fa-trash" style={{ color: 'red', marginTop: '-5px' }}></i>
                               </button>
@@ -635,8 +706,30 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                     </tr>
                     <tr>
                       <td>Disc</td>
-                      <td><input type="text" className="form-control" defaultValue={0} /></td>
+                      <td>
+
+                        <div className="row">
+                          <div className="col-md-2">
+                            <input
+                              type="text"
+                              className="form-control"
+                              value={data ? data.Customer.customer_discount + '%' : customerDisc + '%'} // Example value for the new tiny input
+                              readOnly
+                            />
+                          </div>
+                          <div className="col-md-10">
+                            <input
+                              type="text"
+                              className="form-control"
+                              value={data ? "Rp." + data.total_discount.toLocaleString() : totals.total_discountFormatted}
+                              readOnly
+                            />
+                          </div>
+
+                        </div>
+                      </td>
                     </tr>
+
                     <tr>
                       <td>Total (DPP)</td>
                       <td><input type="text" className="form-control" value={data ? "Rp." + data.total_dpp.toLocaleString() : totals.totalCostFormatted} readOnly /></td>
@@ -684,7 +777,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
     </Modal>
   );
 };
-const TransactionBuy = () => {
+const TransactionSell = () => {
   // Example data for the table
   const [rows, setRows] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -708,7 +801,7 @@ const TransactionBuy = () => {
     try {
       const response = await axios({
         method: "GET",
-        url: `${process.env.REACT_APP_API_URL}/transactions?type=buy`,
+        url: `${process.env.REACT_APP_API_URL}/transactions?type=sell`,
         headers: {
           authorization: localStorage.getItem("authorization"),
         },
@@ -767,7 +860,7 @@ const TransactionBuy = () => {
     { field: "transaction_invoice_number", headerName: "No. Invoice", flex: 1 },
     { field: "transaction_date", headerName: "Tanggal Pembelian", flex: 2, },
     { field: "transaction_due_date", headerName: "Tgl. tempo", flex: 1, },
-    { field: "Supplier", headerName: "Supplier", flex: 1, valueGetter: (params) => params.supplier_name },
+    { field: "Customer", headerName: "Customer", flex: 1, valueGetter: (params) => params.customer_name },
     {
       field: "PPN",
       headerName: "PPN",
@@ -800,7 +893,7 @@ const TransactionBuy = () => {
                 type="button"
                 className="btn btn-outline-primary ml-1"
               >
-                Tambah Pembelian
+                Tambah Penjualan
               </div>
             </div>
           </div>
@@ -812,17 +905,21 @@ const TransactionBuy = () => {
               <div className="col-12">
                 <div className="card">
                   <div style={{ height: "90vh", width: "100%" }}>
-                    <DataGrid
-                      rows={rows}
-                      columns={columns}
-                      pageSize={5}
-                      onRowSelectionModelChange={(selection) => {
-                        // Assuming rows contain products with an 'id' field
-                        if (selection && selection.length > 0) {
-                          handleShow(selection[0]);
-                        }
-                      }}
-                    />
+                    <ThemeProvider theme={theme}>
+
+                      <DataGrid
+                        rows={rows}
+                        columns={columns}
+                        pageSize={5}
+                        onRowSelectionModelChange={(selection) => {
+                          // Assuming rows contain products with an 'id' field
+                          if (selection && selection.length > 0) {
+                            handleShow(selection[0]);
+                          }
+                        }}
+
+                      />
+                    </ThemeProvider>
                   </div>
 
                   <div>
@@ -847,4 +944,4 @@ const TransactionBuy = () => {
   );
 };
 
-export default TransactionBuy;
+export default TransactionSell;

@@ -8,9 +8,10 @@ import Storage from './views/Storages/StorageViews';
 import Area from './views/Areas/area'
 import Expedition from './views/Expeditions/expedition'
 import Customer from './views/Customers/CustomerViews'
-import Transaction from './views/Transactions/transactions';
+
 import Supplier from './views/Suppliers/SupplierViews';
-import TransactionBuy from './views/Transactions/transactions';
+import TransactionBuy from './views/Transactions/transactionBuy';
+import TransactionSell from './views/Transactions/transactionSell';
 function App() {
   return (
     <Routes>
@@ -24,6 +25,7 @@ function App() {
       <Route Route path="/login" element={<LoginViews />} />
       <Route Route path="/transactions" element={<TransactionBuy />} />
       <Route Route path="/suppliers" element={<Supplier />} />
+      <Route Route path="/transactions-sell" element={<TransactionSell />} />
     </Routes>
   );
 }

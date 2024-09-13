@@ -5,7 +5,8 @@ import axios from "axios";
 import { useState, useEffect } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 import Swal from "sweetalert2";
-
+import { ThemeProvider } from '@mui/material/styles';
+import theme from "../../components/theme";
 const MyModal = ({ showModal, handleClose, data,fungsi }) => {
   const [id, setId] = useState();
   const [units, setUnits]=useState([])
@@ -377,20 +378,23 @@ const Home = () => {
             <div className="row">
               <div className="col-12">
                 <div className="card">
-                  <div style={{ height: "90vh", width: "100%" }}>
-                    <DataGrid
-                      rows={rows}
-                      columns={columns}
-                      pageSize={5}
-                      onRowSelectionModelChange={(selection) => {
-                        // Assuming rows contain products with an 'id' field
-                        if (selection && selection.length > 0) {
-                          handleShow(selection[0]);
-                        }
-                      }}
-                    />
-                  </div>
+                <div style={{ height: "90vh", width: "100%" }}>
+                    <ThemeProvider theme={theme}>
 
+                      <DataGrid
+                        rows={rows}
+                        columns={columns}
+                        pageSize={5}
+                        onRowSelectionModelChange={(selection) => {
+                          // Assuming rows contain products with an 'id' field
+                          if (selection && selection.length > 0) {
+                            handleShow(selection[0]);
+                          }
+                        }}
+
+                      />
+                    </ThemeProvider>
+                  </div>
                   <div>
                     <MyModal
                       showModal={showModal}

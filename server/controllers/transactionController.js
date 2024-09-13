@@ -1,4 +1,4 @@
-const { generateRandom6DigitNumber, generateCustomString } = require("../helpers/util");
+const { generateRandom6DigitNumber, generateCustomString, generateSuratJalan } = require("../helpers/util");
 const {
   Transaction,
   Transaction_Product,
@@ -56,7 +56,7 @@ class Controller {
         },
         order: [['id', 'ASC']] // Sort by id in ascending order
       });
-      
+
 
 
 
@@ -103,8 +103,8 @@ class Controller {
     const {
       transaction_date,
       transaction_due_date,
-      transaction_PO_num,
-      transaction_surat_jalan,
+      // transaction_PO_num,
+      // transaction_surat_jalan,
       transaction_customer_id,
       transaction_supplier_id,
       transaction_note,
@@ -121,14 +121,20 @@ class Controller {
       // Start a Sequelize transaction
       const t = await sequelize.transaction();
 
+      const transactionLatest = await Transaction.findOne({
+        order: [['id', 'DESC']],
+        attributes: ['id']
+      });
+
+
       try {
         // Create the transaction record
         transaction = await Transaction.create(
           {
             transaction_date,
             transaction_due_date,
-            transaction_PO_num,
-            transaction_surat_jalan,
+            transaction_PO_num: generateRandom6DigitNumber(),
+            transaction_surat_jalan: generateSuratJalan(transaction?transactionLatest.id:1),
             transaction_customer_id,
             transaction_supplier_id,
             transaction_note,
@@ -193,6 +199,8 @@ class Controller {
           })
         );
 
+
+        
         // If everything is successful, commit the transaction
         await t.commit();
 
@@ -246,6 +254,16 @@ class Controller {
               exclude: ['status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt']
             }
           },
+
+          {
+            model: Customer,
+            where: {
+              status: true
+            },
+
+            attributes: ['customer_name', 'customer_discount', 'customer_time',"customer_expedition_id"]
+
+          },
         ],
         attributes: {
           exclude: ['status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt']
@@ -274,16 +292,26 @@ class Controller {
       } else {
         total_ppn = 0
       }
+      let customer_discount  = transactions.Customer? transactions.Customer.customer_discount:0
+  
+      
+      let total_discount 
+      if (transactions.transaction_type) {
+        total_discount = total_dpp * (customer_discount / 100); // Calculate discount based on percentage
+      }
 
+   
+      
       const fix_transaction_date = new Date(transactions.transaction_date).toISOString().split('T')[0];
       const fix_transaction_due_date = new Date(transactions.transaction_due_date).toISOString().split('T')[0];
-      const total_netto = total_dpp + total_ppn
+      const total_netto = total_dpp + total_ppn - total_discount
 
       const transactionWithTotalAmount = {
         ...transactions.toJSON(), // Convert Sequelize instance to plain object
         total_amount: total_dpp,
         total_dpp,
         total_ppn,
+        total_discount,
         total_netto,
         total_qty,
         transaction_date: fix_transaction_date,
@@ -339,6 +367,9 @@ class Controller {
   static async editTransaction(req, res, next) {
     try {
       const { id } = req.params;
+
+      console.log(req.body);
+      
       const {
         transaction_date,
         transaction_due_date,
@@ -347,7 +378,9 @@ class Controller {
         transaction_supplier_id,
         transaction_note,
         transaction_PO_note,
-        PPN
+        PPN,
+       customer_expedition_id,
+       transaction_customer_id
       } = req.body;
       const { username } = req.userAccess;
 
@@ -380,6 +413,23 @@ class Controller {
           id,
         },
       });
+
+
+     
+      
+      if(customer_expedition_id){
+        
+        console.log('kneaaaaaaaaaa');
+        
+        const data = {
+          customer_expedition_id
+        };
+        await Customer.update(data, {
+          where: {
+            id: transaction_customer_id,
+          },
+        });
+      }
       res.status(200).json({
         error: false,
         msg: `success`,
@@ -446,10 +496,10 @@ class Controller {
           msg: "Transaction not found",
         };
       }
-
+      const t = await sequelize.transaction();
       try {
         // Create the transaction record
-        const t = await sequelize.transaction();
+     
 
 
         // Create entries in the Transaction_Products table for each product associated with the transaction
@@ -461,7 +511,6 @@ class Controller {
               },
             });
 
-            console.log(product.cost);
 
             if (!product) {
               throw new Error(`Product with ID ${productId} not found.`);
@@ -508,7 +557,7 @@ class Controller {
         res.status(201).json({
           error: false,
           msg: `Success`,
-          data: {products },
+          data: { products },
         });
       } catch (error) {
         // If any error occurs during the transaction, rollback changes

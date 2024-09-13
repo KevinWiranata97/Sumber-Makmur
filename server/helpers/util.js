@@ -16,9 +16,21 @@ function generateCustomString(uniqueId) {
 }
 
 
+function generateSuratJalan(uniqueId) {
+    // Get the current date
+    const now = new Date();
+
+    // Extract the current year
+    const year = now.getFullYear();
+
+    // Create the final string
+    return `${uniqueId}/SJ/CV/IV/${year}`;
+}
+
 
 
 module.exports = {
     generateCustomString,
-    generateRandom6DigitNumber
+    generateRandom6DigitNumber,
+    generateSuratJalan
 }
