@@ -712,6 +712,8 @@ const TransactionBuy = () => {
   };
   const handleShow = (productId) => {
 
+    console.log(productId);
+    
     if (productId === "tambahPembelian") {
       setProductById(null);
     } else {

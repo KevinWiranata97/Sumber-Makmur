@@ -221,3 +221,26 @@ input::placeholder {
   margin-left: 10px;
   vertical-align: middle;
 }
+
+
+.form-section h5 {
+  color: #0056b3;
+  font-weight: bold;
+}
+.form-group {
+  margin-bottom: 1rem;
+}
+.bank-account-radio {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+.bank-account-radio input {
+  margin-right: 10px;
+}
+.form-check-input-bank{
+
+    position: absolute;
+    margin-top: .3rem;
+    margin-left: -75px;
+}

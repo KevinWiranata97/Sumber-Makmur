@@ -223,6 +223,8 @@ class Controller {
   static async getTransactionById(req, res, next) {
     try {
       const { id } = req.params;
+      console.log(id,"<<<<<<");
+      
       const transactions = await Transaction.findOne({
         where: {
           status: true,
@@ -260,7 +262,7 @@ class Controller {
             where: {
               status: true
             },
-
+            required:false,
             attributes: ['customer_name', 'customer_discount', 'customer_time',"customer_expedition_id"]
 
           },
@@ -269,6 +271,9 @@ class Controller {
           exclude: ['status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt']
         }
       });
+
+      console.log(transactions);
+      
       if (!transactions) {
         throw {
           name: "not_found",
@@ -568,6 +573,56 @@ class Controller {
       next(error);
     }
   }
+
+  static async generateInvoice(req,res,next){
+    try {
+      const invoice = {
+        date: '15/07/2024',
+        invoiceNumber: 'INV24070285',
+        orderNumber: '2407AA0270',
+        licensePlate: 'DK 2136 FBO',
+        customer: {
+          name: 'Moksun Hie',
+          address: 'Jln DARMASABA',
+          mobile: '0',
+        },
+        technician: 'ARI SETIAWA',
+        members: '',
+        company: {
+          name: 'ABADI MOTOR KB JERUK',
+          address: 'JL PANJANG 17 KEBON JERUK',
+          taxId: '002897245031000',
+        },
+        motorType: 'NMAX ABS',
+        items: [
+          { no: 1, package: 'FSB', itemNumber: '', itemName: 'FULLSET BODY NMAX', unitCost: 1050000, discount: 0, quantity: 1, total: 1050000 },
+          { no: 2, package: 'LMP', itemNumber: '', itemName: 'STOP LAMP NMAX', unitCost: 605000, discount: 0, quantity: 1, total: 605000 },
+          { no: 3, package: 'KSB', itemNumber: 'ONGKOS OLI M+G', itemName: '', unitCost: 7500, discount: 0, quantity: 1, total: 7500 },
+          { no: 4, package: 'Service Ringan', itemNumber: '', itemName: 'YAMALUBE SUPER MATI', unitCost: 74000, discount: 0, quantity: 1, total: 74000 },
+          { no: 5, package: 'Spare Part', itemNumber: '90793-AJ465', itemName: 'YAMALUBE GEAR OIL 150', unitCost: 18500, discount: 0, quantity: 1, total: 18500 },
+        ],
+        totalService: 62500,
+        totalSparePart: 92500,
+        memberBenefitAmount: 0,
+        totalBayar: 175000,
+      };
+    
+      const filePath = 'invoice.pdf';
+      generateInvoice(invoice, filePath);
+    
+      res.download(filePath, (err) => {
+        if (err) {
+          console.error(err);
+          res.status(500).send('Error generating invoice');
+        }
+      });
+    } catch (error) {
+      next(error)
+    }
+    
+  }
 }
+
+
 
 module.exports = Controller;

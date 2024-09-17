@@ -27,7 +27,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
     transaction_customer_id: "",
     PPN: "true",
     transaction_note: "",
-    customer_expedition_id:""
+    customer_expedition_id: ""
   });
 
   useEffect(() => {
@@ -49,7 +49,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
         transaction_customer_id: "",
         PPN: "true",
         transaction_note: "",
-     
+
       });
       setCustomerExpedition("")
       setRows([])
@@ -70,8 +70,8 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-  
-    
+
+
     setFormData({
       ...formData,
       [name]: value,
@@ -160,7 +160,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
         transaction_customer_id: "",
         PPN: "true",
         transaction_note: "",
-        transaction_expedition_id:""
+        transaction_expedition_id: ""
       });
 
       setRows([])
@@ -188,7 +188,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
         transaction_note: formData.transaction_note
       }
 
-   
+
 
       editTransaction(data, transaction_id)
     }
@@ -306,8 +306,8 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
         },
       });
 
-      
-      
+
+
       setExpeditions(response.data)
     } catch (error) {
       console.log(error);
@@ -487,25 +487,37 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
             <div className="col-md-4">
               <label htmlFor="customer" className="form-label">Customer</label>
-              <select
-                className="form-select"
-                name="transaction_customer_id"
-                onChange={handleChange}
-                value={formData.transaction_customer_id}
-                style={{ width: '100%', height: '55%' }}
-              >
-                <option   value="">Pilih Customer</option> {/* Default option */}
-                {customers.length > 0 ? (
-                  customers.map((customer) => (
+
+              {!data ? (
+                // If customers data is available, render the select dropdown
+                <select
+                  className="form-select"
+                  name="transaction_customer_id"
+                  onChange={handleChange}
+                  value={formData.transaction_customer_id}
+                  style={{ width: '100%', height: '55%' }}
+                >
+                  <option value="">Pilih Customer</option> {/* Default option */}
+                  {customers.map((customer) => (
                     <option key={customer.id} value={customer.id}>
                       {customer.customer_name}
                     </option>
-                  ))
-                ) : (
-                  <option disabled>No customers available</option>
-                )}
-              </select>
+                  ))}
+                </select>
+              ) : (
+                // If no customers data, render a normal input field
+                <input
+                  type="text"
+                  className="form-control"
+                  name="transaction_customer_id"
+                  placeholder="Enter Customer Name"
+                  readOnly
+                  value={data.Customer.customer_name}
+                  style={{ width: '100%', height: '55%' }}
+                />
+              )}
             </div>
+
 
 
             <div className="col-md-4 mt-2">
@@ -865,7 +877,7 @@ const TransactionSell = () => {
       field: "PPN",
       headerName: "PPN",
       flex: 1,
-  
+
       renderCell: (params) => (
         <Checkbox
           checked={!!params.value} // Convert to boolean if necessary
@@ -875,7 +887,7 @@ const TransactionSell = () => {
     }
     // Add more columns as needed
   ];
-  
+
 
   useEffect(() => {
     fetchTransactions();

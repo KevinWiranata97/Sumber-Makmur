@@ -12,6 +12,7 @@ import Customer from './views/Customers/CustomerViews'
 import Supplier from './views/Suppliers/SupplierViews';
 import TransactionBuy from './views/Transactions/transactionBuy';
 import TransactionSell from './views/Transactions/transactionSell';
+import Profiles from './views/Profiles/ProfileViews';
 function App() {
   return (
     <Routes>
@@ -26,6 +27,7 @@ function App() {
       <Route Route path="/transactions" element={<TransactionBuy />} />
       <Route Route path="/suppliers" element={<Supplier />} />
       <Route Route path="/transactions-sell" element={<TransactionSell />} />
+      <Route Route path="/profiles" element={<Profiles />} />
     </Routes>
   );
 }

@@ -92,7 +92,7 @@ export default function Sidebar() {
               </li>
 
               <li className="nav-item">
-                <Link to="/transactions-sell" className="nav-link">
+                <Link to="/profiles" className="nav-link">
                 <i className="nav-icon fas fa-info-circle"></i>
 
 

@@ -10,6 +10,7 @@ const routeCustomer = require("../routes/routeCustomer")
 const routerTransaction = require("../routes/routeTransaction")
 const routerArea = require("../routes/routeArea")
 const routerExpedition = require("../routes/routeExpedition")
+const routerCompanyProfile = require("../routes/routeCompanyProfile")
 const router = express.Router();
 const authentication = require("../middlewares/authentication");
 router.use("/users", routerUser);
@@ -24,5 +25,8 @@ router.use("/customers", routeCustomer);
 router.use("/transactions", routerTransaction);
 router.use("/areas", routerArea);
 router.use("/expeditions", routerExpedition);
+router.use("/profiles", routerCompanyProfile);
+
+
 module.exports = router;
 
