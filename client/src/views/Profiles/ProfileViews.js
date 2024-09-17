@@ -141,6 +141,9 @@ const Profiles = () => {
         });
     };
 
+
+    // Function to trigger invoice download
+
     return (
         <>
             <Sidebar />
@@ -164,7 +167,7 @@ const Profiles = () => {
                                                         className="form-control"
                                                         name="company_name"
                                                         value={formData.company_name}
-                                                        
+
                                                         readOnly
                                                     />
                                                 </div>
@@ -341,7 +344,18 @@ const Profiles = () => {
                                                                     />
                                                                 </div>
                                                             </div>
-
+                                                            <div className="row mb-2">
+                                                                <label className="col-sm-4 col-form-label">Bank Name</label>
+                                                                <div className="col-sm-8">
+                                                                    <input
+                                                                        type="text"
+                                                                        className="form-control"
+                                                                        name="bank_name"
+                                                                        value={account.bank_name}
+                                                                        onChange={(e) => handleBankAccountChange(e, index)}
+                                                                    />
+                                                                </div>
+                                                            </div>
                                                             <div className="row mb-2">
                                                                 <label className="col-sm-4 col-form-label">Bank Branch</label>
                                                                 <div className="col-sm-8">
@@ -394,6 +408,8 @@ const Profiles = () => {
                                                     Simpan
                                                 </button>
                                             </div>
+
+                                          
                                         </form>
                                     </div>
                                 </div>

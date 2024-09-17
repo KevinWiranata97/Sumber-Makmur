@@ -1,4 +1,5 @@
-const { generateRandom6DigitNumber, generateCustomString, generateSuratJalan } = require("../helpers/util");
+const generateInvoice = require("../helpers/pdfkit");
+const { generateRandom6DigitNumber, generateCustomString, generateSuratJalan, formatDateToDDMMYYYY, convertToTerbilang } = require("../helpers/util");
 const {
   Transaction,
   Transaction_Product,
@@ -6,9 +7,13 @@ const {
   sequelize,
   Supplier,
   Customer,
-  Unit
+  Unit,
+  Company_Profile,
+  Bank_Account,
+  Tax_Information
 } = require("../models");
-
+const fs = require('fs');
+const path = require('path');
 class Controller {
   static async getTransaction(req, res, next) {
     try {
@@ -134,7 +139,7 @@ class Controller {
             transaction_date,
             transaction_due_date,
             transaction_PO_num: generateRandom6DigitNumber(),
-            transaction_surat_jalan: generateSuratJalan(transaction?transactionLatest.id:1),
+            transaction_surat_jalan: generateSuratJalan(transaction ? transactionLatest.id : 1),
             transaction_customer_id,
             transaction_supplier_id,
             transaction_note,
@@ -200,7 +205,7 @@ class Controller {
         );
 
 
-        
+
         // If everything is successful, commit the transaction
         await t.commit();
 
@@ -223,8 +228,8 @@ class Controller {
   static async getTransactionById(req, res, next) {
     try {
       const { id } = req.params;
-      console.log(id,"<<<<<<");
-      
+
+
       const transactions = await Transaction.findOne({
         where: {
           status: true,
@@ -262,8 +267,8 @@ class Controller {
             where: {
               status: true
             },
-            required:false,
-            attributes: ['customer_name', 'customer_discount', 'customer_time',"customer_expedition_id"]
+            required: false,
+            attributes: ['customer_name', 'customer_discount', 'customer_time', "customer_expedition_id"]
 
           },
         ],
@@ -272,8 +277,8 @@ class Controller {
         }
       });
 
-      console.log(transactions);
-      
+
+
       if (!transactions) {
         throw {
           name: "not_found",
@@ -297,16 +302,16 @@ class Controller {
       } else {
         total_ppn = 0
       }
-      let customer_discount  = transactions.Customer? transactions.Customer.customer_discount:0
-  
-      
-      let total_discount 
+      let customer_discount = transactions.Customer ? transactions.Customer.customer_discount : 0
+
+
+      let total_discount
       if (transactions.transaction_type) {
         total_discount = total_dpp * (customer_discount / 100); // Calculate discount based on percentage
       }
 
-   
-      
+
+
       const fix_transaction_date = new Date(transactions.transaction_date).toISOString().split('T')[0];
       const fix_transaction_due_date = new Date(transactions.transaction_due_date).toISOString().split('T')[0];
       const total_netto = total_dpp + total_ppn - total_discount
@@ -373,8 +378,8 @@ class Controller {
     try {
       const { id } = req.params;
 
-      console.log(req.body);
-      
+
+
       const {
         transaction_date,
         transaction_due_date,
@@ -384,8 +389,8 @@ class Controller {
         transaction_note,
         transaction_PO_note,
         PPN,
-       customer_expedition_id,
-       transaction_customer_id
+        customer_expedition_id,
+        transaction_customer_id
       } = req.body;
       const { username } = req.userAccess;
 
@@ -420,12 +425,12 @@ class Controller {
       });
 
 
-     
-      
-      if(customer_expedition_id){
-        
-        console.log('kneaaaaaaaaaa');
-        
+
+
+      if (customer_expedition_id) {
+
+
+
         const data = {
           customer_expedition_id
         };
@@ -504,7 +509,7 @@ class Controller {
       const t = await sequelize.transaction();
       try {
         // Create the transaction record
-     
+
 
 
         // Create entries in the Transaction_Products table for each product associated with the transaction
@@ -574,52 +579,196 @@ class Controller {
     }
   }
 
-  static async generateInvoice(req,res,next){
+  static async generateInvoice(req, res, next) {
     try {
-      const invoice = {
-        date: '15/07/2024',
-        invoiceNumber: 'INV24070285',
-        orderNumber: '2407AA0270',
-        licensePlate: 'DK 2136 FBO',
-        customer: {
-          name: 'Moksun Hie',
-          address: 'Jln DARMASABA',
-          mobile: '0',
+      const { id } = req.params;
+    
+      
+      const transactions = await Transaction.findOne({
+        where: {
+          status: true,
+          id: id
         },
-        technician: 'ARI SETIAWA',
-        members: '',
-        company: {
-          name: 'ABADI MOTOR KB JERUK',
-          address: 'JL PANJANG 17 KEBON JERUK',
-          taxId: '002897245031000',
-        },
-        motorType: 'NMAX ABS',
-        items: [
-          { no: 1, package: 'FSB', itemNumber: '', itemName: 'FULLSET BODY NMAX', unitCost: 1050000, discount: 0, quantity: 1, total: 1050000 },
-          { no: 2, package: 'LMP', itemNumber: '', itemName: 'STOP LAMP NMAX', unitCost: 605000, discount: 0, quantity: 1, total: 605000 },
-          { no: 3, package: 'KSB', itemNumber: 'ONGKOS OLI M+G', itemName: '', unitCost: 7500, discount: 0, quantity: 1, total: 7500 },
-          { no: 4, package: 'Service Ringan', itemNumber: '', itemName: 'YAMALUBE SUPER MATI', unitCost: 74000, discount: 0, quantity: 1, total: 74000 },
-          { no: 5, package: 'Spare Part', itemNumber: '90793-AJ465', itemName: 'YAMALUBE GEAR OIL 150', unitCost: 18500, discount: 0, quantity: 1, total: 18500 },
+        include: [
+          {
+            model: Transaction_Product,
+            where: {
+              status: true
+            },
+            include: [
+              {
+                model: Product,
+                attributes: {
+                  exclude: ['status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt', 'NPWP', 'storage_id', 'type']
+                },
+                include: [
+                  {
+                    model: Unit,
+                    attributes: ['unit_code']
+                  },
+                ]
+              },
+
+
+            ],
+            attributes: {
+              exclude: ['status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt']
+            }
+          },
+
+          {
+            model: Customer,
+            where: {
+              status: true
+            },
+            required: false,
+            attributes: ['customer_name', 'customer_discount', 'customer_time', "customer_expedition_id","customer_address_1","customer_address_2"]
+
+          },
+
+          {
+            model: Supplier,
+            where: {
+              status: true
+            },
+            required: false,
+            attributes: ['supplier_name','supplier_address']
+
+          },
         ],
-        totalService: 62500,
-        totalSparePart: 92500,
-        memberBenefitAmount: 0,
-        totalBayar: 175000,
-      };
-    
-      const filePath = 'invoice.pdf';
-      generateInvoice(invoice, filePath);
-    
-      res.download(filePath, (err) => {
-        if (err) {
-          console.error(err);
-          res.status(500).send('Error generating invoice');
+        attributes: {
+          exclude: ['status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt']
         }
+      });
+
+      const companyProfile = await Company_Profile.findOne({
+        where: {
+            company_name: "CV.SUMBER MAKMUR DIESEL",
+            status: true, // Only get non-deleted company profiles
+        },
+        include: [
+            {
+                model: Bank_Account,
+                as: 'bank_accounts',
+            },
+            {
+                model: Tax_Information,
+                as: 'tax_information',
+            },
+        ],
+    });
+
+    const activeAccount = companyProfile.bank_accounts.find(account => account.status === true);
+
+   
+    
+      const total_qty = transactions.Transaction_Products.reduce((sum, product) => {
+        return sum + product.qty;
+      }, 0); // Start from 0
+
+
+      const total_dpp = transactions.Transaction_Products.reduce((sum, product) => {
+        return sum + (product.qty * product.Product.cost);
+      }, 0);
+
+      // Calculate total PPN (10% of total DPP)
+      let total_ppn
+      if (transactions.PPN === true) {
+        total_ppn = total_dpp * 0.1;
+      } else {
+        total_ppn = 0
+      }
+      let customer_discount = transactions.Customer ? transactions.Customer.customer_discount : 0
+
+
+      let total_discount
+      if (transactions.transaction_type) {
+        total_discount = total_dpp * (customer_discount / 100); // Calculate discount based on percentage
+      }
+
+      
+
+      const fix_transaction_date = new Date(transactions.transaction_date).toISOString().split('T')[0];
+      const fix_transaction_due_date = new Date(transactions.transaction_due_date).toISOString().split('T')[0];
+      const total_netto = total_dpp + total_ppn - total_discount
+
+      const transactionWithTotalAmount = {
+        ...transactions.toJSON(), // Convert Sequelize instance to plain object
+        total_amount: total_dpp,
+        total_dpp,
+        total_ppn,
+        total_discount,
+        total_netto,
+        total_qty,
+        transaction_date: fix_transaction_date,
+        transaction_due_date: fix_transaction_due_date
+      };
+      const invoiceData = {
+        transaction_date:formatDateToDDMMYYYY(transactions.transaction_date),
+        transaction_due_date:formatDateToDDMMYYYY(transactions.transaction_due_date),
+        invoiceNumber: transactions.transaction_invoice_number,
+        sjNumber: transactions.transaction_surat_jalan,
+        items: transactions.Transaction_Products.map(product => ({
+          quantity: product.qty,
+          partNumber: product.Product.part_number,
+          itemName: `${product.Product.product} ${product.Product.replacement_code}`,
+          unitCost: product.current_cost,
+          total: product.qty * product.current_cost,
+        })),
+        subTotal: transactionWithTotalAmount.total_dpp,
+        discount: transactionWithTotalAmount.total_discount,
+        totalPpn:transactionWithTotalAmount.total_ppn,
+        total: transactionWithTotalAmount.total_dpp,
+        grandTotal: transactionWithTotalAmount.total_netto,
+        terbilang: convertToTerbilang(transactionWithTotalAmount.total_netto).toUpperCase(),
+        transaction_type: transactionWithTotalAmount.transaction_type.toUpperCase(),
+        bank: {
+          accountName: activeAccount.account_name,
+          accountNumber: activeAccount.account_number,
+          bankName: activeAccount.bank_name,
+          bankBranch: activeAccount.bank_branch,
+        },
+        
+        customer: {
+          name: transactions.transaction_type === "sell" 
+            ? transactions.Customer.customer_name 
+            : transactions.Supplier.supplier_name,
+            
+          address: transactions.transaction_type === "sell" 
+            ? transactions.Customer.customer_address_1 
+            : transactions.Supplier.supplier_address,
+        },
+        
+        signature: companyProfile.person_1,
+      };
+
+
+
+
+      const invoiceName = `invoice_${invoiceData.invoiceNumber}`
+      const invoiceDir = path.join(__dirname, '..', 'data', 'invoice');
+      if (!fs.existsSync(invoiceDir)) {
+        fs.mkdirSync(invoiceDir, { recursive: true }); // Create the directory if it doesn't exist
+      }
+      
+      // Create the file in the /data/invoice folder inside server
+      const filePath = path.join(invoiceDir, `${invoiceName+'.pdf'}`);
+      generateInvoice(invoiceData, filePath); // Assuming you have a function to generate PDF
+
+      // Respond with the file URL (assuming the file is served via some static route)
+      const fileUrl = `${req.protocol}://${req.get('host')}/download-invoice/${invoiceName+'.pdf'}`;
+
+      res.status(201).json({
+        error: false,
+        msg: `Success`,
+        data: {
+          fileUrl: fileUrl, // Provide the URL for download
+        },
       });
     } catch (error) {
       next(error)
     }
-    
+
   }
 }
 

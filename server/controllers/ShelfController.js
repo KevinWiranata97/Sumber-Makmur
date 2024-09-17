@@ -26,7 +26,7 @@ class Controller {
         createdBy:username
       };
 
-      console.log(data);
+      
       await Shelf.create(data);
       res.status(201).json({
         error: false,

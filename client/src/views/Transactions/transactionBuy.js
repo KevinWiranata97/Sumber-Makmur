@@ -24,6 +24,8 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
   const [transaction_id, setTransactionId] = useState();
   const [suppliers, setSuppliers] = useState([])
   const [products, setProducts] = useState([])
+
+
   const [rows, setRows] = useState([]);
 
   const [formData, setFormData] = useState({
@@ -35,7 +37,6 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
     PPN: "true",
     transaction_note: ""
   });
-
 
 
 
@@ -225,6 +226,37 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
       }
     });
   };
+
+  const handleDownload = async () => {
+    try {
+
+
+
+      const response = await axios({
+        method: "GET",
+        url: `${process.env.REACT_APP_API_URL}/transactions/generate-invoice/${transaction_id}`,
+        headers: {
+          authorization: localStorage.getItem("authorization"),
+        },
+      });
+
+
+
+      // Extract the fileUrl from the API response
+      const fileUrl = response.data.data.fileUrl;
+
+      // Create a hidden <a> element and trigger the download
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = 'invoice.pdf'; // Optional: specify the file name for download
+      document.body.appendChild(link); // Append the link to the body
+      link.click(); // Programmatically trigger the click
+      document.body.removeChild(link); // Clean up by removing the link
+    } catch (error) {
+      console.error('Error downloading the invoice:', error);
+      // Handle error (e.g., show a message to the user)
+    }
+  };
   async function deleteProduct(id) {
 
 
@@ -392,9 +424,14 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
   // Handle updating the selected barang in the row
   const handleBarangChange = (index, selectedBarang) => {
+    ;
+
     const newRows = [...rows];
+
+
     newRows[index].Product = selectedBarang;
     newRows[index].current_cost = selectedBarang.cost;
+
     setRows(newRows);
   };
 
@@ -426,6 +463,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
 
 
+
   return (
     <Modal show={showModal} onHide={handleClose} size="xl">
       <Modal.Header>
@@ -440,6 +478,16 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
             title="Tambah Barang"
           >
             <i className="fas fa-plus" style={{ color: 'green', fontSize: '24px' }}></i>
+          </button>
+
+          <button
+            className="btn btn-link"
+            onClick={handleDownload} // Add row when clicked
+            data-bs-toggle="tooltip"
+            data-bs-placement="top"
+            title="Print Invoice"
+          >
+            <i className="fas fa-print" style={{ color: '#6c757d', fontSize: '24px' }}></i> {/* Gray */}
           </button>
           <button
             className="btn btn-link"
@@ -535,6 +583,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                   <th>No.</th>
                   <th>Kode Barang</th>
                   <th>Nama Barang</th>
+
                   <th>Qty</th>
                   <th>Satuan</th>
                   <th>Cost</th>
@@ -548,7 +597,6 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                     <tr key={index}>
                       <td>{index + 1}</td>
                       <td>
-                        {/* Show a dropdown only for new rows */}
                         {item.isNew ? (
                           <select
                             value={item.Product.id || ''}
@@ -559,15 +607,14 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                               )
                             }
                           >
-                            <option value="" disabled>Pilih Barang</option>
+                            <option value="">Pilih Barang</option>
                             {products.map((barang) => (
-                              <option key={barang.id} value={barang.id}>
+                              <option key={barang.id} value={barang.id} defaultValue={1}>
                                 {barang.part_number}
                               </option>
                             ))}
                           </select>
                         ) : (
-                          // Show text for existing rows
                           item.Product.part_number
                         )}
                       </td>
@@ -577,53 +624,44 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                           <input
                             type="number"
                             value={item.qty}
-                            onChange={(e) =>
+                            onChange={(e) => {
                               setRows((prevRows) => {
                                 const updatedRows = [...prevRows];
                                 updatedRows[index].qty = e.target.value;
                                 return updatedRows;
-                              })
-                            }
+                              });
+                            }}
                             min="1"
                           />
                         ) : (
-                          // Show text for existing rows
                           item.qty
                         )}
                       </td>
-                      <td>{item.Product.unit_code || ''}</td>
+                      {/* Add a conditional check for Unit */}
+                      <td>{item.Product.Unit ? item.Product.Unit.unit_code : 'N/A'}</td>
                       <td>{item.current_cost.toLocaleString()}</td>
                       <td>{(item.qty * item.current_cost).toLocaleString()}</td>
                       <td>
                         {index === 0 ? (
-                          <span></span> // No trash can for the first item
-                        ) : (
-                          data && rows.length > 1 && !item.isNew ? (
-                            <button
-                              className="btn btn-link d-flex flex-column align-items-center justify-content-start"
-                              onClick={() => handleDelete(item.id)} // Calls API to delete
-                              title="Hapus Barang"
-                            >
-                              <i className="fas fa-trash" style={{ color: 'blue', marginTop: '-5px' }}></i>
-                            </button>
-                          ) : (
-                            rows.length > 1 && (
-                              <button
-                                className="btn btn-link d-flex flex-column align-items-center justify-content-start"
-                                onClick={() => deleteRowLocally(index)} // Deletes row locally
-                                title="Hapus Barang"
-                              >
-                                <i className="fas fa-trash" style={{ color: 'red', marginTop: '-5px' }}></i>
-                              </button>
-                            )
-                          )
-                        )}
+                          <span></span>
+                        ) : data && rows.length > 1 && !item.isNew ? (
+                          <button
+                            className="btn btn-link"
+                            onClick={() => handleDelete(item.id)}
+                            title="Hapus Barang"
+                          >
+                            <i className="fas fa-trash" style={{ color: 'blue', marginTop: '-5px' }}></i>
+                          </button>
+                        ) : rows.length > 1 ? (
+                          <button
+                            className="btn btn-link"
+                            onClick={() => deleteRowLocally(index)}
+                            title="Hapus Barang"
+                          >
+                            <i className="fas fa-trash" style={{ color: 'red', marginTop: '-5px' }}></i>
+                          </button>
+                        ) : null}
                       </td>
-
-
-
-
-
                     </tr>
                   ))
                 ) : (
@@ -634,6 +672,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                   </tr>
                 )}
               </tbody>
+
             </table>
           </div>
         </div>
@@ -712,8 +751,7 @@ const TransactionBuy = () => {
   };
   const handleShow = (productId) => {
 
-    console.log(productId);
-    
+
     if (productId === "tambahPembelian") {
       setProductById(null);
     } else {
