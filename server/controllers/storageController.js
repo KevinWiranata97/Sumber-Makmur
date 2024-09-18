@@ -1,15 +1,57 @@
 const {Storage } = require("../models");
-const { comparePassword } = require("../helpers/bcrypt");
-const { generateToken } = require("../helpers/jwt");
+const { Op } = require('sequelize');
+
 class Controller {
   static async getStorage(req, res, next) {
     try {
-      const storage = await Storage.findAll({
+      // Get search query, page, and limit from request query parameters
+      const searchQuery = req.query.search || ''; // Default search is an empty string
+      const limit = parseInt(req.query.limit) || 10; // Default limit is 10
+      let page = parseInt(req.query.page);
+      
+      // Ensure page is at least 1, handle cases where page=0 or NaN
+      page = !isNaN(page) && page > 0 ? page : 1;
+  
+      const offset = (page - 1) * limit; // Calculate the offset for pagination (1-based page)
+  
+     
+      // Find all storages with pagination and optional search query
+      const { count, rows: storages } = await Storage.findAndCountAll({
         where: {
-          status: true,
+          status: true, // Ensure the status is true
+          [Op.or]: [
+            {
+              storage_name: {
+                [Op.iLike]: `%${searchQuery}%`, // Case-insensitive search in storage_name field
+              },
+            },
+            {
+              storage_code: {
+                [Op.iLike]: `%${searchQuery}%`, // Case-insensitive search in storage_code field (if applicable)
+              },
+            },
+          ],
+        },
+        limit, // Limit the number of results returned per page
+        offset, // Skip the first (page-1) * limit results
+      });
+  
+      // Calculate the total number of pages
+      const totalPages = Math.ceil(count / limit);
+ 
+  
+      // Return the results along with pagination metadata
+      res.status(200).json({
+        error: false,
+        msg: 'Success',
+        data: storages,
+        pagination: {
+          totalItems: count,
+          currentPage: page,
+          totalPages,
+          itemsPerPage: limit,
         },
       });
-      res.status(200).json(storage);
     } catch (error) {
       next(error);
     }

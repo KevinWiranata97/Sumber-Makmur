@@ -1,5 +1,5 @@
 const generateInvoice = require("../helpers/pdfkit");
-const { generateRandom6DigitNumber, generateCustomString, generateSuratJalan, formatDateToDDMMYYYY, convertToTerbilang } = require("../helpers/util");
+const { generateRandom6DigitNumber, generateCustomString, generateSuratJalan, formatDateToDDMMYYYY, convertToTerbilang, formatDateToYYYYMMDD } = require("../helpers/util");
 const {
   Transaction,
   Transaction_Product,
@@ -14,95 +14,128 @@ const {
 } = require("../models");
 const fs = require('fs');
 const path = require('path');
+const { Op } = require('sequelize');
 class Controller {
+ 
+
+  
+  // Controller function to get paginated and searchable transactions
   static async getTransaction(req, res, next) {
     try {
-      // Extract the type query parameter
-      const { type } = req.query;
-
-      // Construct the where clause based on the presence of the type parameter
+      // Extract query parameters
+      const { type, search} = req.query;
+      const searchQuery = req.query.search || ''; // Defau
+      const limit = parseInt(req.query.limit) || 10; // Default limit is 10
+      let page = parseInt(req.query.page);
+  
+      // Ensure page is at least 1, handle cases where page=0 or NaN
+      page = !isNaN(page) && page > 0 ? page : 1;
+      const offset = (page - 1) * limit; // Calculate the offset for pagination (1-based page)
+  
+      // Construct the where clause based on the presence of the type and search parameters
+    
+  
+   
+  
       const whereClause = {
         status: true,
+        [Op.or]: [
+          {
+            transaction_invoice_number: {
+              [Op.iLike]: `%${searchQuery}%`, // Case-insensitive search in transaction_invoice_number field
+            },
+          },
+          {
+            transaction_proof_number: {
+              [Op.iLike]: `%${searchQuery}%`, // Case-insensitive search in transaction_proof_number field
+            },
+          },
+   
+       
+        ].filter(Boolean), // Filter out any null conditions
       };
       if (type && (type === 'buy' || type === 'sell')) {
         whereClause.transaction_type = type;
       }
-
-
-      const transactions = await Transaction.findAll({
+      // Fetch the transactions with search, pagination, and related models (Supplier, Customer, Transaction_Product)
+      const { count, rows: transactions } = await Transaction.findAndCountAll({
         where: whereClause,
         include: [
           {
-            model: Transaction_Product,
-            required: true,
-            include: [
-              {
-                model: Product,
-                attributes: {
-                  exclude: ['status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt', 'NPWP', 'storage_id', 'type', 'stock']
-                }
-              },
-            ],
-            attributes: {
-              exclude: ['status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt']
-            }
-          },
-          {
             model: Supplier,
-            attributes: ['id', 'supplier_name']
+            attributes: ['id', 'supplier_name'], // Include supplier name
+            required: false, // LEFT JOIN Supplier
           },
           {
             model: Customer,
-            attributes: ['id', 'customer_name']
+            attributes: ['id', 'customer_name'], // Include customer name
+            required: false, // LEFT JOIN Customer
+          },
+          {
+            model: Transaction_Product,
+            required: true, // INNER JOIN Transaction_Product
+            include: [
+              {
+                model: Product,
+                attributes: ['id', 'name'], // Include Product name
+              },
+            ],
           },
         ],
         attributes: {
-          exclude: ['status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt']
+          exclude: ['status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt'],
         },
-        order: [['id', 'ASC']] // Sort by id in ascending order
+        order: [['id', 'ASC']], // Sort by id in ascending order
+        limit, // Set limit for pagination
+        offset, // Set offset for pagination
       });
-
-
-
-
       // After fetching the transactions, calculate the total amount
-      const transactionsWithTotalAmount = transactions.map(transaction => {
+      const transactionsWithTotalAmount = transactions.map((transaction) => {
         // Calculate the total amount for each transaction
         const total_amount = transaction.Transaction_Products.reduce((sum, product) => {
-          return sum + (product.qty * product.Product.cost);
+          return sum + product.qty * product.Product.cost;
         }, 0); // Start from 0
-
+  
         // Format the transaction date
         const fix_transaction_date = new Date(transaction.transaction_date).toLocaleDateString('en-GB', {
           day: '2-digit',
           month: '2-digit',
-          year: 'numeric'
+          year: 'numeric',
         });
-
+  
         const fix_transaction_due_date = new Date(transaction.transaction_due_date).toLocaleDateString('en-GB', {
           day: '2-digit',
           month: '2-digit',
-          year: 'numeric'
-        });;
+          year: 'numeric',
+        });
+  
         // Add the total amount and formatted date to the transaction object
         return {
           ...transaction.toJSON(), // Convert the Sequelize object to a plain object
           total_amount,
           transaction_date: fix_transaction_date,
-          transaction_due_date: fix_transaction_due_date  // Include the formatted transaction date
+          transaction_due_date: fix_transaction_due_date, // Include the formatted transaction date
         };
       });
+  
+      // Calculate the total number of pages
+      const totalPages = Math.ceil(count / limit);
+  
       res.status(200).json({
         error: false,
-        msg: `Success`,
+        msg: 'Success',
         data: transactionsWithTotalAmount,
+        pagination: {
+          totalItems: count,
+          currentPage: page,
+          totalPages,
+          itemsPerPage: limit,
+        },
       });
     } catch (error) {
       next(error);
     }
   }
-
-
   static async createTransaction(req, res, next) {
     let transaction;
     const {

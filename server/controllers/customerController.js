@@ -1,35 +1,92 @@
 const { Customer, Area, Expedition } = require("../models");
-
+const { Op } = require('sequelize');
 class Controller {
   static async getCustomer(req, res, next) {
     try {
-      const customer = await Customer.findAll({
+      // Get search query, page, and limit from request query parameters
+      const searchQuery = req.query.search || ''; // Default search is an empty string
+      const limit = parseInt(req.query.limit) || 10; // Default limit is 10
+      let page = parseInt(req.query.page);
+  
+      console.log(searchQuery);
+      
+      // Ensure page is at least 1, handle cases where page=0 or NaN
+      page = !isNaN(page) && page > 0 ? page : 1;
+  
+      const offset = (page - 1) * limit; // Calculate the offset for pagination (1-based page)
+  
+      // Find all customers with pagination, search, and include related data (Area and Expedition)
+      const { count, rows: customers } = await Customer.findAndCountAll({
         where: {
-          status: true,
+          status: true, // Ensure the status is true
+          [Op.or]: [
+            {
+              customer_name: {
+                [Op.iLike]: `%${searchQuery}%`, // Case-insensitive search in customer_name field
+              },
+            },
+            {
+              customer_address_1: {
+                [Op.iLike]: `%${searchQuery}%`, // Case-insensitive search in customer_address_1
+              },
+            },
+            {
+              customer_phone: {
+                [Op.iLike]: `%${searchQuery}%`, // Case-insensitive search in customer_phone
+              },
+            },
+            {
+              customer_email: {
+                [Op.iLike]: `%${searchQuery}%`, // Case-insensitive search in customer_email
+              },
+            },
+            {
+              '$Area.area_name$': {
+                [Op.iLike]: `%${searchQuery}%`, // Search in related Storage name
+              },
+            },
+            {
+              '$Expedition.expedition_name$': {
+                [Op.iLike]: `%${searchQuery}%`, // Search in related Unit code
+              },
+            },
+          ],
         },
         include: [
           {
             model: Area,
-            attributes:['area_name']
+            attributes: ['area_name'],
+           
           },
           {
             model: Expedition,
-            attributes:['expedition_name']
+            attributes: ['expedition_name'],
+   
           },
         ],
+        limit, // Limit the number of results returned per page
+        offset, // Skip the first (page-1) * limit results
       });
-
-      
+  
+      // Calculate the total number of pages
+      const totalPages = Math.ceil(count / limit);
+  
+      // Return the results along with pagination metadata
       res.status(200).json({
         error: false,
-        msg: `Success`,
-        data: customer,
+        msg: 'Success',
+        data: customers,
+        pagination: {
+          totalItems: count,
+          currentPage: page,
+          totalPages,
+          itemsPerPage: limit,
+        },
       });
     } catch (error) {
       next(error);
     }
   }
-
   static async createCustomer(req, res, next) {
     try {
       const {

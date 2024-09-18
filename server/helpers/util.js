@@ -96,6 +96,10 @@ function formatDateToDDMMYYYY(dateInput) {
   
     return convertThousandAndUp(number);
   }
+  function formatDateToYYYYMMDD(dateString) {
+    const [day, month, year] = dateString.split('/');
+    return `${year}-${month}-${day}`; // Return in YYYY-MM-DD format
+  }
   
  
 module.exports = {
@@ -103,5 +107,6 @@ module.exports = {
     generateRandom6DigitNumber,
     generateSuratJalan,
     formatDateToDDMMYYYY,
-    convertToTerbilang
+    convertToTerbilang,
+    formatDateToYYYYMMDD
 }

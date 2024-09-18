@@ -8,6 +8,7 @@ import Swal from "sweetalert2";
 import { Checkbox } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from "../../components/theme";
+import SearchBar from "../../components/searchbar";
 const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
 
@@ -339,7 +340,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
 
 
-      setExpeditions(response.data)
+      setExpeditions(response.data.data)
     } catch (error) {
       console.log(error);
     }
@@ -827,6 +828,12 @@ const TransactionSell = () => {
   const [rows, setRows] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [productById, setProductById] = useState();
+
+  const [rowCount, setRowCount] = useState(0); // Total rows count from the server
+  const [pageSize, setPageSize] = useState(25); // Number of rows per page
+  const [page, setPage] = useState(0); // Current page number (zero-based)
+  const [loading, setLoading] = useState(false); // Loading state for DataGrid
+
   const handleClose = () => {
     setProductById(null);
     fetchTransactions();
@@ -842,23 +849,28 @@ const TransactionSell = () => {
 
     setShowModal(true);
   };
-  async function fetchTransactions() {
+  const fetchTransactions = async (value) => {
+    setLoading(true);
     try {
+      const searchTerm = value || '';
+
       const response = await axios({
-        method: "GET",
-        url: `${process.env.REACT_APP_API_URL}/transactions?type=sell`,
+        method: 'GET',
+        url: `${process.env.REACT_APP_API_URL}/transactions?type=sell&search=${searchTerm}&limit=${pageSize}&page=${page+1}`,
         headers: {
-          authorization: localStorage.getItem("authorization"),
+          authorization: localStorage.getItem('authorization'),
         },
       });
 
-
-
+      // Update the rows and total row count based on the response
       setRows(response.data.data);
+      setRowCount(response.data.pagination.totalItems); // Total rows available
     } catch (error) {
-      console.log(error);
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   async function fetchTransactionById(id) {
     try {
@@ -924,7 +936,7 @@ const TransactionSell = () => {
 
   useEffect(() => {
     fetchTransactions();
-  }, []);
+  },[page, pageSize]);
 
   return (
     <>
@@ -934,15 +946,10 @@ const TransactionSell = () => {
         {/* Content Header (Page header) */}
         <section className="content-header">
           <div className="d-flex flex-row justify-content-between">
-            <div>
-              <div
-                onClick={() => handleShow("tambahPembelian")}
-                type="button"
-                className="btn btn-outline-primary ml-1"
-              >
-                Tambah Penjualan
-              </div>
-            </div>
+            {/* Remove Tambah Barang Button */}
+
+            {/* Render SearchBar with the onAdd prop */}
+            <SearchBar fetchProducts={fetchTransactions} onAdd={() => handleShow("tambahBarang")} />
           </div>
         </section>
         {/* Main content */}
@@ -952,19 +959,35 @@ const TransactionSell = () => {
               <div className="col-12">
                 <div className="card">
                   <div style={{ height: "90vh", width: "100%" }}>
-                    <ThemeProvider theme={theme}>
-
+                  <ThemeProvider theme={theme}>
                       <DataGrid
                         rows={rows}
                         columns={columns}
-                        pageSize={5}
+                        pageSize={pageSize}
+                        rowCount={rowCount} // Total row count from the server for correct pagination
+                        paginationMode="server" // Enable server-side pagination
+                        paginationModel={{ page, pageSize }} // Bind page and pageSize states
+                        onPaginationModelChange={(newPaginationModel) => {
+                          setPage(newPaginationModel.page);
+                          setPageSize(newPaginationModel.pageSize);
+                        }}
                         onRowSelectionModelChange={(selection) => {
                           // Assuming rows contain products with an 'id' field
                           if (selection && selection.length > 0) {
                             handleShow(selection[0]);
                           }
                         }}
-
+                        loading={loading} // Show loading indicator while fetching data
+                        pagination // Enable pagination
+                        sx={{
+                          '& .MuiDataGrid-row:hover': {
+                            backgroundColor: '#e0f7fa', // Customize hover background color
+                            cursor: 'pointer', // Change cursor on hover (optional)
+                          },
+                          '& .MuiDataGrid-cell:hover': {
+                            color: '#00695c', // Customize hover text color in cells (optional)
+                          },
+                        }}
                       />
                     </ThemeProvider>
                   </div>

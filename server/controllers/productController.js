@@ -5,9 +5,18 @@ class Controller {
 
   static async getProduct(req, res, next) {
     try {
-      const searchQuery = req.query.search || ''; // Get the search term from query params
+      // Get search query from request, or use empty string as default
+      const searchQuery = req.query.search || '';
   
-      const product = await Product.findAll({
+      // Get limit and page from query parameters, default to 10 items per page and page 1
+      const limit = parseInt(req.query.limit) || 10;
+      const page = parseInt(req.query.page) || 1;
+  
+      // Calculate the offset (how many records to skip)
+      const offset = (page - 1) * limit;
+  
+      // Fetch products with pagination
+      const { count, rows: products } = await Product.findAndCountAll({
         where: {
           status: true,
           [Op.or]: [
@@ -37,17 +46,22 @@ class Controller {
               },
             },
             searchQuery ? {
-              sell_price: {
-                [Op.eq]: Number(searchQuery), // Use exact number match for sell_price
+              cost: {
+                [Op.eq]: Number(searchQuery), // Use exact number match for cost
               },
             } : null,
-            // Search by related 'storage_name'
+            searchQuery
+              ? {
+                  sell_price: {
+                    [Op.eq]: Number(searchQuery), // Use exact number match for sell_price
+                  },
+                }
+              : null,
             {
               '$Storage.storage_name$': {
                 [Op.iLike]: `%${searchQuery}%`, // Search in related Storage name
               },
             },
-            // Search by related 'unit_code'
             {
               '$Unit.unit_code$': {
                 [Op.iLike]: `%${searchQuery}%`, // Search in related Unit code
@@ -66,12 +80,24 @@ class Controller {
           },
         ],
         order: [['id', 'ASC']],
+        limit, // Set limit for pagination
+        offset, // Set offset for pagination
       });
   
+      // Calculate total pages
+      const totalPages = Math.ceil(count / limit);
+  
+      // Return paginated result with metadata
       res.status(200).json({
         error: false,
         msg: 'Success',
-        data: product,
+        data: products,
+        pagination: {
+          totalItems: count,
+          currentPage: page,
+          totalPages,
+          itemsPerPage: limit,
+        },
       });
     } catch (error) {
       next(error);

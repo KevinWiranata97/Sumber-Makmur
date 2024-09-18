@@ -8,10 +8,11 @@ import Swal from "sweetalert2";
 import { ThemeProvider } from '@mui/material/styles';
 import theme from "../../components/theme";
 import SearchBar from "../../components/searchbar";
-const MyModal = ({ showModal, handleClose, data,fungsi }) => {
+
+const MyModal = ({ showModal, handleClose, data, fungsi }) => {
   const [id, setId] = useState();
-  const [units, setUnits]=useState([])
-  const [storages, setStorages]=useState([])
+  const [units, setUnits] = useState([])
+  const [storages, setStorages] = useState([])
   const columns = [
     { field: "name", headerName: "Nama Barang", flex: 2 },
     { field: "part_number", headerName: "Part Number", flex: 1 },
@@ -45,7 +46,7 @@ const MyModal = ({ showModal, handleClose, data,fungsi }) => {
     unit_id: "",
     cost: "",
     sell_price: "",
-    stock:""
+    stock: ""
   });
 
   useEffect(() => {
@@ -66,7 +67,7 @@ const MyModal = ({ showModal, handleClose, data,fungsi }) => {
         unit_id: "",
         cost: "",
         sell_price: "",
-        stock:""
+        stock: ""
       });
     }
   }, [data]);
@@ -85,7 +86,7 @@ const MyModal = ({ showModal, handleClose, data,fungsi }) => {
     let data = formData
 
 
-    fungsi(data,id)
+    fungsi(data, id)
     handleClose(); // Close modal after form submission
   };
 
@@ -139,7 +140,7 @@ const MyModal = ({ showModal, handleClose, data,fungsi }) => {
         },
       });
 
-      setUnits(response.data);
+      setUnits(response.data.data);
     } catch (error) {
       console.log(error);
     }
@@ -154,116 +155,145 @@ const MyModal = ({ showModal, handleClose, data,fungsi }) => {
         },
       });
 
-      setStorages(response.data);
+      setStorages(response.data.data);
     } catch (error) {
       console.log(error);
     }
   }
-return (
-  <Modal show={showModal} onHide={handleClose} size="xl">
-  <Modal.Header>
-    <Modal.Title>{data ? 'Edit Barang' : 'Tambah Barang'}</Modal.Title>
-    <button className="btn btn-link" onClick={handleDelete}>
-    {data ?<i className="fas fa-trash"  style={{ color: 'red' }}> </i> : <></> }  
-    </button>
-  </Modal.Header>
-  <Modal.Body>
-    <Form onSubmit={handleSubmit}>
-      <div className="row">
-        {columns.map((column) => (
-          
-          <div className="col-6 mb-2" key={column.field}>
-            <Form.Group controlId={column.field}>
-              <Form.Label>{column.headerName}</Form.Label>
-              {column.field === 'storage_id' || column.field === 'unit_id' ? (
-                <Form.Control
-                  as="select"
-                  name={column.field}
-                  value={formData[column.field]}
-                  onChange={handleChange}
-                  required
-                >
-                  {/* Generate dropdown options */}
-                  <option value="">{`Pilih ${column.headerName}`}</option>
-                  {column.field === 'storage_id' ? (
-                    storages.map((storage) => (
-                      <option key={storage.id} value={storage.id} selected={formData.storage_id === storage.id}>
-                        {storage.storage_name}
-                      </option>
-                    ))
-                  ) : null}
-                  {column.field === 'unit_id' ? (
-                    units.map((unit) => (
-                      <option key={unit.id} value={unit.id} selected={formData.unit_id === unit.id}>
-                        {unit.unit_code}
-                      </option>
-                    ))
-                  ) : null}
-                </Form.Control>
-              ) : (
-                <Form.Control
-                  type="text"
-                  name={column.field}
-                  value={formData[column.field]}
-                  onChange={handleChange}
-                  required
-                />
-              )}
-            </Form.Group>
+  return (
+    <Modal show={showModal} onHide={handleClose} size="xl">
+      <Modal.Header>
+        <Modal.Title>{data ? 'Edit Barang' : 'Tambah Barang'}</Modal.Title>
+        <button className="btn btn-link" onClick={handleDelete}>
+          {data ? <i className="fas fa-trash" style={{ color: 'red' }}> </i> : <></>}
+        </button>
+      </Modal.Header>
+      <Modal.Body>
+        <Form onSubmit={handleSubmit}>
+          <div className="row">
+            {columns.map((column) => (
+
+              <div className="col-6 mb-2" key={column.field}>
+                <Form.Group controlId={column.field}>
+                  <Form.Label>{column.headerName}</Form.Label>
+                  {column.field === 'storage_id' || column.field === 'unit_id' ? (
+                    <Form.Control
+                      as="select"
+                      name={column.field}
+                      value={formData[column.field]}
+                      onChange={handleChange}
+                      required
+                    >
+                      {/* Generate dropdown options */}
+                      <option value="">{`Pilih ${column.headerName}`}</option>
+                      {column.field === 'storage_id' ? (
+                        storages.map((storage) => (
+                          <option key={storage.id} value={storage.id} selected={formData.storage_id === storage.id}>
+                            {storage.storage_name}
+                          </option>
+                        ))
+                      ) : null}
+                      {column.field === 'unit_id' ? (
+                        units.map((unit) => (
+                          <option key={unit.id} value={unit.id} selected={formData.unit_id === unit.id}>
+                            {unit.unit_code}
+                          </option>
+                        ))
+                      ) : null}
+                    </Form.Control>
+                  ) : (
+                    <Form.Control
+                      type="text"
+                      name={column.field}
+                      value={formData[column.field]}
+                      onChange={handleChange}
+                      required
+                    />
+                  )}
+                </Form.Group>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <div className="text-right mb-3 mt-3">
-        <Button variant="secondary" className="mr-2" onClick={handleClose}>
-          Close
-        </Button>
-        <Button variant="primary" type="submit">
-          Save
-        </Button>
-      </div>
-    </Form>
-  </Modal.Body>
-</Modal>
+          <div className="text-right mb-3 mt-3">
+            <Button variant="secondary" className="mr-2" onClick={handleClose}>
+              Close
+            </Button>
+            <Button variant="primary" type="submit">
+              Save
+            </Button>
+          </div>
+        </Form>
+      </Modal.Body>
+    </Modal>
   );
 };
 const Home = () => {
   // Example data for the table
   const [rows, setRows] = useState([]);
+  const [rowCount, setRowCount] = useState(0); // Total rows count from the server
+  const [pageSize, setPageSize] = useState(25); // Number of rows per page
+  const [page, setPage] = useState(0); // Current page number (zero-based)
+  const [loading, setLoading] = useState(false); // Loading state for DataGrid
   const [showModal, setShowModal] = useState(false);
   const [productById, setProductById] = useState();
-  const handleClose = () =>{
+  const handleClose = () => {
     setProductById(null)
     fetchProducts()
     setShowModal(false);
   }
   const handleShow = (productId) => {
 
-   if(productId === 'tambahBarang'){
-    setProductById(null)
-   }else{
-    fetchProductsById(productId);
-   }
-  
+    if (productId === 'tambahBarang') {
+      setProductById(null)
+    } else {
+      fetchProductsById(productId);
+    }
+
     setShowModal(true);
   };
-  async function fetchProducts() {
+  // const fetchProducts = async (value) => {
+  //   try {
+  //     // If value is undefined or null, use an empty string
+  //     const searchTerm = value || '';
+
+  //     const response = await axios({
+  //       method: 'GET',
+  //       url: `${process.env.REACT_APP_API_URL}/products?search=${searchTerm}`,
+  //       headers: {
+  //         authorization: localStorage.getItem('authorization'),
+  //       },
+  //     });
+
+  //     // Set the fetched data to state
+  //     setRows(response.data.data);
+  //   } catch (error) {
+  //     console.log('Error fetching products:', error);
+  //   }
+  // };
+
+
+  const fetchProducts = async (value) => {
+    setLoading(true);
     try {
+      const searchTerm = value || '';
+
       const response = await axios({
-        method: "GET",
-        url: `${process.env.REACT_APP_API_URL}/products`,
+        method: 'GET',
+        url: `${process.env.REACT_APP_API_URL}/products?search=${searchTerm}&limit=${pageSize}&page=${page+1}`,
         headers: {
-          authorization: localStorage.getItem("authorization"),
+          authorization: localStorage.getItem('authorization'),
         },
       });
 
- 
-      
+      // Update the rows and total row count based on the response
       setRows(response.data.data);
+      setRowCount(response.data.pagination.totalItems); // Total rows available
     } catch (error) {
-      console.log(error);
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
     }
-  }
-
+  };
   async function fetchProductsById(id) {
     try {
       const response = await axios({
@@ -280,7 +310,7 @@ const Home = () => {
     }
   }
 
-    async function editProduct(data,id) {
+  async function editProduct(data, id) {
     try {
       const response = await axios({
         method: "PUT",
@@ -303,7 +333,7 @@ const Home = () => {
     }
   }
 
-  async function addProduct(data,id) {
+  async function addProduct(data, id) {
     try {
       const response = await axios({
         method: "POST",
@@ -344,14 +374,26 @@ const Home = () => {
       valueGetter: (params) => params.unit_code,
     },
     { field: "stock", headerName: "Stock", flex: 1 },
-    { field: "cost", headerName: "Cost", flex: 1 },
-    { field: "sell_price", headerName: "Harga Jual", flex: 1 },
-    // Add more columns as needed
+    {
+      field: "cost",
+      headerName: "Cost",
+      flex: 1,
+      valueGetter: (params) => `Rp. ${params.toLocaleString('id-ID')}`,
+    },
+    {
+      field: "sell_price",
+      headerName: "Harga Jual",
+      flex: 1,
+      valueGetter: (params) => `Rp. ${params.toLocaleString('id-ID')}`,
+    },
   ];
 
+  // Call fetchProducts when page, pageSize, or searchTerm changes
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [page, pageSize]);
+
+
 
 
   return (
@@ -361,49 +403,62 @@ const Home = () => {
       <div className="content-wrapper">
         {/* Content Header (Page header) */}
         <section className="content-header">
-        <div className="d-flex flex-row justify-content-between">
-            <div>
-              <div
-                  onClick={() => handleShow("tambahBarang")}
-                type="button"
-               className="btn btn-outline-primary ml-1"
-              >
-                Tambah Barang
-              </div>
-            </div>
-          </div>
+          <div className="d-flex flex-row justify-content-between">
+            {/* Remove Tambah Barang Button */}
 
-          <SearchBar> q</SearchBar>
+            {/* Render SearchBar with the onAdd prop */}
+            <SearchBar fetchProducts={fetchProducts} onAdd={() => handleShow("tambahBarang")} />
+          </div>
         </section>
+
         {/* Main content */}
         <section className="content">
           <div className="container-fluid">
             <div className="row">
               <div className="col-12">
                 <div className="card">
-                <div style={{ height: "90vh", width: "100%" }}>
+                  <div style={{ height: "90vh", width: "100%" }}>
                     <ThemeProvider theme={theme}>
-
                       <DataGrid
                         rows={rows}
                         columns={columns}
-                        pageSize={5}
+                        pageSize={pageSize}
+                        rowCount={rowCount} // Total row count from the server for correct pagination
+                        paginationMode="server" // Enable server-side pagination
+                        paginationModel={{ page, pageSize }} // Bind page and pageSize states
+                        onPaginationModelChange={(newPaginationModel) => {
+                          setPage(newPaginationModel.page);
+                          setPageSize(newPaginationModel.pageSize);
+                        }}
                         onRowSelectionModelChange={(selection) => {
                           // Assuming rows contain products with an 'id' field
                           if (selection && selection.length > 0) {
                             handleShow(selection[0]);
                           }
                         }}
-
+                        loading={loading} // Show loading indicator while fetching data
+                        pagination // Enable pagination
+                        sx={{
+                          '& .MuiDataGrid-row:hover': {
+                            backgroundColor: '#e0f7fa', // Customize hover background color
+                            cursor: 'pointer', // Change cursor on hover (optional)
+                          },
+                          '& .MuiDataGrid-cell:hover': {
+                            color: '#00695c', // Customize hover text color in cells (optional)
+                          },
+                        }}
                       />
                     </ThemeProvider>
                   </div>
+
+
+
                   <div>
                     <MyModal
                       showModal={showModal}
                       handleClose={handleClose}
                       data={productById}
-                      fungsi={productById?editProduct:addProduct}
+                      fungsi={productById ? editProduct : addProduct}
                     />
                   </div>
                 </div>
