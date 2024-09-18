@@ -1,0 +1,38 @@
+version: '3'
+services:
+  backend:
+    build: ./server
+    ports:
+      - "5000:5000"
+    environment:
+      - DB_HOST=db  # Use service name "db" instead of 127.0.0.1
+      - DB_PORT=5433  # Host port (mapped to 5432 inside the container)
+      - DB_USER=postgres
+      - DB_PASSWORD=souleater123
+      - DB_NAME=sumber_makmur
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  frontend:
+    build: ./client
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres  # Match the backend environment
+      POSTGRES_PASSWORD: souleater123  # Match the backend environment
+      POSTGRES_DB: sumber_makmur  # Match the backend environment
+    ports:
+      - "5433:5432"  # Expose container's 5432 port to host's 5433 port
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

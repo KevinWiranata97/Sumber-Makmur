@@ -23,7 +23,7 @@ class Controller {
   static async getTransaction(req, res, next) {
     try {
       // Extract query parameters
-      const { type, search} = req.query;
+      const { type} = req.query;
       const searchQuery = req.query.search || ''; // Defau
       const limit = parseInt(req.query.limit) || 10; // Default limit is 10
       let page = parseInt(req.query.page);
