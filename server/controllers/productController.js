@@ -9,14 +9,15 @@ class Controller {
       const searchQuery = req.query.search || '';
   
       // Get limit and page from query parameters, default to 10 items per page and page 1
-      const limit = parseInt(req.query.limit) || 10;
+      // If limit is 0 or undefined, we assume "no limit"
+      const limit = parseInt(req.query.limit) || 0; // 0 will mean "no limit"
       const page = parseInt(req.query.page) || 1;
   
-      // Calculate the offset (how many records to skip)
-      const offset = (page - 1) * limit;
+      // Calculate the offset (how many records to skip), only if limit is set
+      const offset = limit > 0 ? (page - 1) * limit : 0;
   
-      // Fetch products with pagination
-      const { count, rows: products } = await Product.findAndCountAll({
+      // Query options
+      const queryOptions = {
         where: {
           status: true,
           [Op.or]: [
@@ -45,11 +46,13 @@ class Controller {
                 [Op.iLike]: `%${searchQuery}%`, // Case-insensitive search in replacement_code field
               },
             },
-            searchQuery ? {
-              cost: {
-                [Op.eq]: Number(searchQuery), // Use exact number match for cost
-              },
-            } : null,
+            searchQuery
+              ? {
+                  cost: {
+                    [Op.eq]: Number(searchQuery), // Use exact number match for cost
+                  },
+                }
+              : null,
             searchQuery
               ? {
                   sell_price: {
@@ -79,13 +82,20 @@ class Controller {
             attributes: ['unit_code'],
           },
         ],
-        order: [['id', 'ASC']],
-        limit, // Set limit for pagination
-        offset, // Set offset for pagination
-      });
+        order: [['id', 'ASC']], // Order the results by ID in ascending order
+      };
   
-      // Calculate total pages
-      const totalPages = Math.ceil(count / limit);
+      // Add pagination only if limit is greater than 0
+      if (limit > 0) {
+        queryOptions.limit = limit;
+        queryOptions.offset = offset;
+      }
+  
+      // Fetch products with or without pagination
+      const { count, rows: products } = await Product.findAndCountAll(queryOptions);
+  
+      // Calculate total pages (only if limit > 0)
+      const totalPages = limit > 0 ? Math.ceil(count / limit) : 1;
   
       // Return paginated result with metadata
       res.status(200).json({
@@ -96,13 +106,14 @@ class Controller {
           totalItems: count,
           currentPage: page,
           totalPages,
-          itemsPerPage: limit,
+          itemsPerPage: limit > 0 ? limit : count, // If no limit, show total count
         },
       });
     } catch (error) {
       next(error);
     }
   }
+  
 
   static async createProduct(req, res, next) {
     try {

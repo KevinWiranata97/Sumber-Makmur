@@ -3,7 +3,7 @@ import Sidebar from "../../components/sidebar";
 import { DataGrid } from "@mui/x-data-grid";
 import axios from "axios";
 import { useState, useEffect } from "react";
-import { Modal, Button, Form } from "react-bootstrap";
+import { Modal, Button } from "react-bootstrap";
 import Swal from "sweetalert2";
 import { Checkbox } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
@@ -936,6 +936,7 @@ const TransactionSell = () => {
 
   useEffect(() => {
     fetchTransactions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   },[page, pageSize]);
 
   return (

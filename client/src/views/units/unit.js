@@ -265,6 +265,7 @@ const Unit = () => {
 
   useEffect(() => {
     fetchUnits();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, pageSize]);
 
   return (
