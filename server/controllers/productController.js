@@ -1,27 +1,76 @@
 const { Product, Storage, Unit } = require("../models");
-
+const { Op } = require('sequelize'); // Import Sequelize operators
 class Controller {
+
+
   static async getProduct(req, res, next) {
     try {
+      const searchQuery = req.query.search || ''; // Get the search term from query params
+  
       const product = await Product.findAll({
         where: {
           status: true,
+          [Op.or]: [
+            {
+              name: {
+                [Op.iLike]: `%${searchQuery}%`, // Case-insensitive search in name field
+              },
+            },
+            {
+              part_number: {
+                [Op.iLike]: `%${searchQuery}%`, // Case-insensitive search in part_number field
+              },
+            },
+            {
+              product: {
+                [Op.iLike]: `%${searchQuery}%`, // Case-insensitive search in product field
+              },
+            },
+            {
+              type: {
+                [Op.iLike]: `%${searchQuery}%`, // Case-insensitive search in type field
+              },
+            },
+            {
+              replacement_code: {
+                [Op.iLike]: `%${searchQuery}%`, // Case-insensitive search in replacement_code field
+              },
+            },
+            searchQuery ? {
+              sell_price: {
+                [Op.eq]: Number(searchQuery), // Use exact number match for sell_price
+              },
+            } : null,
+            // Search by related 'storage_name'
+            {
+              '$Storage.storage_name$': {
+                [Op.iLike]: `%${searchQuery}%`, // Search in related Storage name
+              },
+            },
+            // Search by related 'unit_code'
+            {
+              '$Unit.unit_code$': {
+                [Op.iLike]: `%${searchQuery}%`, // Search in related Unit code
+              },
+            },
+          ].filter(Boolean), // Filter out any null conditions
         },
         include: [
           {
             model: Storage,
-            attributes:['storage_name']
+            attributes: ['storage_name'],
           },
           {
             model: Unit,
-            attributes:['unit_code']
+            attributes: ['unit_code'],
           },
         ],
-        order: [['id', 'ASC']]
+        order: [['id', 'ASC']],
       });
+  
       res.status(200).json({
         error: false,
-        msg: `Success`,
+        msg: 'Success',
         data: product,
       });
     } catch (error) {
@@ -38,7 +87,7 @@ class Controller {
         type,
         replacement_code,
         storage_id,
-        NPWP,
+      
         stock,
         unit_id,
         cost,
@@ -53,7 +102,7 @@ class Controller {
         type,
         replacement_code,
         storage_id,
-        NPWP,
+      
         stock,
         unit_id,
         cost,

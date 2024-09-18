@@ -7,6 +7,7 @@ import { Modal, Button, Form } from "react-bootstrap";
 import Swal from "sweetalert2";
 import { ThemeProvider } from '@mui/material/styles';
 import theme from "../../components/theme";
+import SearchBar from "../../components/searchbar";
 const MyModal = ({ showModal, handleClose, data,fungsi }) => {
   const [id, setId] = useState();
   const [units, setUnits]=useState([])
@@ -352,7 +353,7 @@ const Home = () => {
     fetchProducts();
   }, []);
 
-  
+
   return (
     <>
       <Sidebar />
@@ -371,6 +372,8 @@ const Home = () => {
               </div>
             </div>
           </div>
+
+          <SearchBar> q</SearchBar>
         </section>
         {/* Main content */}
         <section className="content">

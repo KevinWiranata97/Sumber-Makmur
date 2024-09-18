@@ -679,6 +679,8 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                         )}
                       </td>
                       <td>{item.isNew ? item.Product.name : item.Product.name}</td>
+                      <td>{item.Product.product + item.Product.replacement_code }</td>
+                     
                       <td>
                         {item.isNew ? (
                           <input

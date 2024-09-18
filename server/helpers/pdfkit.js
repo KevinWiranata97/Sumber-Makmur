@@ -1,191 +1,135 @@
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 
-function generateInvoice(invoice, filePath) {
-    let doc = new PDFDocument({ size: "A4", layout: "landscape", margin: 50 });
+function generateInvoice(invoiceData, filePath) {
+  const doc = new PDFDocument({ margin: 50 });
 
-  generateHeader(doc, invoice);
-  generateCustomerInformation(doc, invoice);
-  generateInvoiceTable(doc, invoice);
-  generateFooter(doc);
-
-  doc.end();
+  // Pipe the output to a file
   doc.pipe(fs.createWriteStream(filePath));
-}
 
-function generateHeader(doc, invoice) {
+  // Header with company information
   doc
-    .fillColor('#000000')
+    .fontSize(14)
+    .font('Helvetica-Bold')
+    .text('CV. SUMBER MAKMUR DIESEL', { align: 'center' })
+    .moveDown(0.5);
+
+  doc
     .fontSize(12)
-    .text('FAKTUR SERVICE', 200, 40, { align: 'center' })
-    .fontSize(10)
-    .text(`Tanggal: ${invoice.date}`, 50, 80)
-    .text(`No. Invoice: ${invoice.invoiceNumber}`, 50, 95)
-    .text(`Order No.: ${invoice.orderNumber}`, 50, 110)
-    .text(`No. Polisi: ${invoice.licensePlate}`, 50, 125)
-    .text(`Nama: ${invoice.customer.name}`, 50, 140)
-    .text(`Alamat: ${invoice.customer.address}`, 50, 155)
-    .text(`Mobile: ${invoice.customer.mobile}`, 50, 170)
-    .text(`Technician: ${invoice.technician}`, 300, 80)
-    .text(`Members: ${invoice.members}`, 300, 95)
-    .text(`${invoice.company.name}`, 300, 110, { align: 'right' })
-    .text(`${invoice.company.address}`, 300, 125, { align: 'right' })
-    .text(`NPWP No.: ${invoice.company.taxId}`, 300, 140, { align: 'right' })
-    .text(`Tipe Motor: ${invoice.motorType}`, 300, 155, { align: 'right' })
-    .moveDown();
-}
+    .font('Helvetica-Bold')
+    .text('GENERAL SPAREPART & TECHNICAL SUPPLIER', { align: 'center' })
+    .moveDown(0.5);
 
-function generateCustomerInformation(doc, invoice) {
-  // Customer information already included in the header for this layout.
-}
-
-function generateInvoiceTable(doc, invoice) {
-  let i;
-  const invoiceTableTop = 200;
-
-  doc.font('Helvetica-Bold');
-  generateTableRow(
-    doc,
-    invoiceTableTop,
-    'No.',
-    'Package',
-    'Nomor Item',
-    'Nama Item',
-    'Harga Satuan',
-    'Discount%',
-    'Qty',
-    'Total',
-    50
-  );
-  generateHr(doc, invoiceTableTop + 20);
-  doc.font('Helvetica');
-
-  for (i = 0; i < invoice.items.length; i++) {
-    const item = invoice.items[i];
-    const position = invoiceTableTop + (i + 1) * 30;
-    generateTableRow(
-      doc,
-      position,
-      item.no,
-      item.package,
-      item.itemNumber,
-      item.itemName,
-      formatCurrency(item.unitCost),
-      item.discount,
-      item.quantity,
-      formatCurrency(item.total)
-    );
-
-    generateHr(doc, position + 20);
-  }
-
-  const subtotalPosition = invoiceTableTop + (i + 1) * 30;
-  generateTableRow(
-    doc,
-    subtotalPosition,
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    'Total Service',
-    formatCurrency(invoice.totalService)
-  );
-
-  const totalSparePartPosition = subtotalPosition + 20;
-  generateTableRow(
-    doc,
-    totalSparePartPosition,
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    'Total Spare Part',
-    formatCurrency(invoice.totalSparePart)
-  );
-
-  const memberBenefitAmountPosition = totalSparePartPosition + 20;
-  generateTableRow(
-    doc,
-    memberBenefitAmountPosition,
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    'Member Benefit Amount',
-    formatCurrency(invoice.memberBenefitAmount)
-  );
-
-  const totalPosition = memberBenefitAmountPosition + 30;
-  doc.font('Helvetica-Bold');
-  generateTableRow(
-    doc,
-    totalPosition,
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    'Total Bayar',
-    formatCurrency(invoice.totalBayar)
-  );
-  doc.font('Helvetica');
-}
-
-function generateFooter(doc) {
   doc
     .fontSize(10)
-    .text('Harga sudah termasuk PPN 11%', 50, 450)
-    .text('Comment for customer:', 50, 480)
-    .text('Service Advisor: ____________________', 50, 520)
-    .text('Konsumen: Kevin Wiranata', 300, 520)
-    .text('Cashier:  (            )', 500, 520)
-    .moveDown();
-}
+    .font('Helvetica')
+    .text('Jl. Krekot Raya, Ruko Komplek Krekot Bunder IV No. 34A', { align: 'center' })
+    .text('Jakarta Pusat - 10710', { align: 'center' })
+    .text('Telp: (021) 34833155 - 157   Fax: (021) 34833158', { align: 'center' })
+    .moveDown(1);
 
-function generateTableRow(doc, y, no, pkg, itemNum, itemName, unitCost, discount, qty, total) {
-    const columnMargin = 10; // Margin space between columns in points
-    const columnWidths = {
-      no: 30,           // Width for No. column
-      pkg: 80,          // Width for Package column
-      itemNum: 100,      // Width for Nomor Item column
-      itemName: 130,    // Width for Nama Item column
-      unitCost: 100,     // Width for Harga Satuan column
-      discount: 60,     // Width for Discount% column
-      qty: 100,          // Width for Qty column
-      total: 100         // Width for Total column
-    };
-  
+  // Separator line
+  // doc
+  //   .moveTo(50, 120)
+  //   .lineTo(550, 120)
+  //   .stroke();
+
+  // Invoice details (left side)
+  doc
+  .fontSize(10)
+  .text(`TIPE TRANSAKSI : ${invoiceData.transaction_type|| '-'}`, 50, 135)
+  .text(`TGL.TRANSAKSI : ${invoiceData.transaction_date|| '-'}`, 50, 150)
+  .text(`TGL.TEMPO : ${invoiceData.transaction_due_date|| '-'}`, 50, 165)
+  .text(`INV NO  : ${invoiceData.invoiceNumber}`, 50, 180) // Changed y-coordinate from 100 to 150
+  .text(`SJ NO   : ${invoiceData.sjNumber || '-'}`, 50, 195) // Changed y-coordinate from 115 to 165
+  .text(`ITEMS   : ${invoiceData.items.length} Items`, 50, 210) // Changed y-coordinate from 130 to 180
+  .text(`PO NO   : ${invoiceData.poNumber || 'BY. PHONE'}`, 50, 225) // Changed y-coordinate from 145 to 195
+
+  // Date and recipient info (right side)
+  doc
+  .fontSize(10)
+  .text(`Jakarta, ${invoiceData.transaction_date}`, 400, 150, { align: 'right' }) // Changed y-coordinate from 100 to 150
+  .moveDown()
+  .text('Kepada Yth,', { align: 'right' })
+  .text(`${invoiceData.customer.name}`, { align: 'right' })
+  .text(`${invoiceData.customer.address}`, { align: 'right' })
+  .moveDown(1);
+
+
+  // Table Headers
+  const tableTop = 250;
+  doc
+    .fontSize(10)
+    .text('NO.', 50, tableTop)
+    .text('QTY', 100, tableTop)
+    .text('PART NUMBER', 150, tableTop)
+    .text('DESCRIPTION', 250, tableTop)
+    .text('UNIT PRICE', 400, tableTop, { width: 90, align: 'right' })
+    .text('AMOUNT', 490, tableTop, { align: 'right' })
+    .moveDown();
+
+  // Draw a line under the headers
+  doc.moveTo(50, tableTop + 15).lineTo(600, tableTop + 15).stroke();
+
+  // List the items
+  let position = tableTop + 30;
+  invoiceData.items.forEach((item, index) => {
     doc
       .fontSize(10)
-      .text(no, 50, y, { width: columnWidths.no, align: 'right' })
-      .text(pkg, 50 + columnWidths.no + columnMargin, y, { width: columnWidths.pkg, align: 'left' })
-      .text(itemNum, 50 + columnWidths.no + columnWidths.pkg + 2 * columnMargin, y, { width: columnWidths.itemNum, align: 'left' })
-      .text(itemName, 50 + columnWidths.no + columnWidths.pkg + columnWidths.itemNum + 3 * columnMargin, y, { width: columnWidths.itemName, align: 'left' })
-      .text(unitCost, 50 + columnWidths.no + columnWidths.pkg + columnWidths.itemNum + columnWidths.itemName + 4 * columnMargin, y, { width: columnWidths.unitCost, align: 'right' })
-      .text(discount, 50 + columnWidths.no + columnWidths.pkg + columnWidths.itemNum + columnWidths.itemName + columnWidths.unitCost + 5 * columnMargin, y, { width: columnWidths.discount, align: 'right' })
-      .text(qty, 50 + columnWidths.no + columnWidths.pkg + columnWidths.itemNum + columnWidths.itemName + columnWidths.unitCost + columnWidths.discount + 6 * columnMargin, y, { width: columnWidths.qty, align: 'right' })
-      .text(total, 50 + columnWidths.no + columnWidths.pkg + columnWidths.itemNum + columnWidths.itemName + columnWidths.unitCost + columnWidths.discount + columnWidths.qty + 7 * columnMargin, y, { width: columnWidths.total, align: 'right' });
-  }
-  
-  
-function generateHr(doc, y) {
+      .text(index + 1, 50, position)
+      .text(item.quantity, 100, position)
+      .text(item.partNumber || '', 150, position)
+      .text(item.itemName || '', 250, position)
+      .text(item.unitCost.toLocaleString(), 400, position, { width: 90, align: 'right' })
+      .text(item.total.toLocaleString(), 490, position, { align: 'right' });
+    position += 20;
+  });
+
+  // TERBILANG and Summary on Same Line
+  const summaryTop = position + 30;
+
+  // Draw a line before the "TERBILANG" and "SUB TOTAL" sections
+  doc.moveTo(50, summaryTop - 10).lineTo(600, summaryTop - 10).stroke();
+
+  // Render TERBILANG and Summary
   doc
-    .strokeColor('#aaaaaa')
-    .lineWidth(1)
-    .moveTo(50, y)
-    .lineTo(850, y)
-    .stroke();
-}
+    .fontSize(10)
+    .text(`TERBILANG: # ${invoiceData.terbilang} Rupiah #`, 50, summaryTop, { align: 'left' })
+    .text('SUB TOTAL', 400, summaryTop, { width: 90, align: 'right' })
+    .text(invoiceData.subTotal.toLocaleString(), 490, summaryTop, { align: 'right' })
+    .moveDown(0.5)
+    .text('DISCOUNT', 400, summaryTop + 15, { width: 90, align: 'right' })
+    .text(invoiceData.discount.toLocaleString(), 490, summaryTop + 15, { align: 'right' })
+    .text('TOTAL', 400, summaryTop + 30, { width: 90, align: 'right' })
+    .text(invoiceData.total.toLocaleString(), 490, summaryTop + 30, { align: 'right' })
+    .text('TOTAL PPN', 400, summaryTop + 45, { width: 90, align: 'right' })
+    .text(invoiceData.totalPpn.toLocaleString(), 490, summaryTop + 45, { align: 'right' })
+    .font('Helvetica-Bold')
+    .text('GRAND TTL', 400, summaryTop + 60, { width: 90, align: 'right' })
+    .text(invoiceData.grandTotal.toLocaleString(), 490, summaryTop + 60, { align: 'right' });
 
-function formatCurrency(value) {
-  return 'Rp. ' + value.toFixed(2);
-}
+  // Tanda Terima and Payment Information
+  const bottomPosition = summaryTop + 120;
+  doc
+    .fontSize(10)
+    .text('Tanda Terima,', 50, bottomPosition)
+    .text('PEMBAYARAN:', 200, bottomPosition)
+    .text('Hormat kami,', 400, bottomPosition, { align: 'right' })
+    .text(`A/N: ${invoiceData.bank.accountName}`, 200, bottomPosition + 15)
+    .text(`AC: ${invoiceData.bank.accountNumber}`, 200, bottomPosition + 30)
+    .text(`BANK: ${invoiceData.bank.bankName}, ${invoiceData.bank.bankBranch}`, 200, bottomPosition + 45)
+    .text(invoiceData.signature || 'ANTHONI LIE', 400, bottomPosition + 45, { align: 'right' })
+    .moveDown();
 
+  // Signature Section for Tanda Terima
+  doc
+    .fontSize(10)
+    .text('__________________', 50, bottomPosition + 60)
+    .moveDown();
+
+  // Finalize the PDF
+  doc.end();
+}
 module.exports = generateInvoice;
+
+// Example invoice data (based on the provided structure)
