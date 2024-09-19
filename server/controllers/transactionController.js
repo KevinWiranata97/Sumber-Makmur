@@ -741,6 +741,7 @@ class Controller {
         transaction_due_date:formatDateToDDMMYYYY(transactions.transaction_due_date),
         invoiceNumber: transactions.transaction_invoice_number,
         sjNumber: transactions.transaction_surat_jalan,
+        poNumber:transactions.transaction_PO_num,
         items: transactions.Transaction_Products.map(product => ({
           quantity: product.qty,
           partNumber: product.Product.part_number,
@@ -761,7 +762,11 @@ class Controller {
           bankName: activeAccount.bank_name,
           bankBranch: activeAccount.bank_branch,
         },
-        
+        companyName:companyProfile.company_name,
+        companyAddress:companyProfile.address,
+        companyPhone:companyProfile.phone,
+        companyFax:companyProfile.fax,
+        cityPostalCode:`${companyProfile.city + ' - ' + companyProfile.postal_code}`,
         customer: {
           name: transactions.transaction_type === "sell" 
             ? transactions.Customer.customer_name 

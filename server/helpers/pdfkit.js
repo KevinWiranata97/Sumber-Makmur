@@ -11,7 +11,7 @@ function generateInvoice(invoiceData, filePath) {
   doc
     .fontSize(14)
     .font('Helvetica-Bold')
-    .text('CV. SUMBER MAKMUR DIESEL', { align: 'center' })
+    .text(`${invoiceData.companyName|| 'CV. SUMBER MAKMUR DIESEL'}`, { align: 'center' })
     .moveDown(0.5);
 
   doc
@@ -23,9 +23,9 @@ function generateInvoice(invoiceData, filePath) {
   doc
     .fontSize(10)
     .font('Helvetica')
-    .text('Jl. Krekot Raya, Ruko Komplek Krekot Bunder IV No. 34A', { align: 'center' })
-    .text('Jakarta Pusat - 10710', { align: 'center' })
-    .text('Telp: (021) 34833155 - 157   Fax: (021) 34833158', { align: 'center' })
+    .text(`${invoiceData.companyAddress|| 'Jl. Krekot Raya, Ruko Komplek Krekot Bunder IV No. 34A'}`, { align: 'center' })
+    .text(`${invoiceData.cityPostalCode|| 'Jakarta Pusat - 10710'}`, { align: 'center' })
+    .text(`Telp: ${invoiceData.companyPhone||'(021) 34833155 - 157'}   Fax: ${invoiceData.companyFax || '(021) 34833158'} `, { align: 'center' })
     .moveDown(1);
 
   // Separator line
