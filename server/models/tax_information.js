@@ -19,7 +19,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    default_rack: {
+    tax_ppn: {
       type: DataTypes.STRING,
       allowNull: true,
     },

@@ -30,6 +30,8 @@ module.exports = (sequelize, DataTypes) => {
     transaction_proof_number:DataTypes.STRING,
     transaction_payment_due_time:DataTypes.INTEGER,
     PPN:DataTypes.BOOLEAN,
+    transaction_ppn_value:DataTypes.INTEGER,
+    transaction_discount:DataTypes.INTEGER,
     status:DataTypes.BOOLEAN,
     createdBy: DataTypes.STRING,
     updatedBy: DataTypes.STRING,

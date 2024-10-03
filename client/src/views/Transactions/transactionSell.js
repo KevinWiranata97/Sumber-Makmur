@@ -9,6 +9,8 @@ import { Checkbox } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from "../../components/theme";
 import SearchBar from "../../components/searchbar";
+import formatCurrency from "../../helpers/formatCurrency";
+import Select from 'react-select';
 const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
 
@@ -20,6 +22,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
   const [rows, setRows] = useState([]);
   const [customerDisc, setCustomerDisc] = useState(0)
   const [customerExpedition, setCustomerExpedition] = useState(0)
+  const [currentTax, setCurrentTax] = useState(0)
   const [formData, setFormData] = useState({
     transaction_proof_number: "",
     transaction_invoice_number: "",
@@ -28,13 +31,20 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
     transaction_customer_id: "",
     PPN: "true",
     transaction_note: "",
-    customer_expedition_id: ""
+    customer_expedition_id: "",
+    transaction_PO_num: "",
+    transaction_discount: ""
   });
+
+
+
+
 
   useEffect(() => {
     fetchCustomers()
     fetchProducts()
     fetchExpeditions()
+    getCompanyProfileById();
     // fetchTransactionById(28)
     if (data) {
       setFormData(data);
@@ -45,6 +55,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
       setFormData({
         transaction_proof_number: "",
         transaction_invoice_number: "",
+
         transaction_date: "",
         transaction_due_date: "",
         transaction_customer_id: "",
@@ -70,21 +81,62 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    const numericValue = value.replace(/[^0-9]/g, ''); // Allow only numbers
+
+    const validatedValue = name === 'transaction_discount' ? Math.min(numericValue, 100) : value;
 
 
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      [name]: validatedValue,
+    }));
 
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
 
-    const selectedCustomer = customers.find((customer) => customer.id === parseInt(value));
+    // Only check for customer selection when the field "transaction_customer_id" changes
+    if (name === "transaction_customer_id") {
+      const selectedCustomer = customers.find((customer) => customer.id === parseInt(value));
 
-    // If customer is found, set the discount
-    if (selectedCustomer) {
-      setCustomerDisc(selectedCustomer.customer_discount);
-      setCustomerExpedition(selectedCustomer.customer_expedition_id) // Assuming the discount field is 'customer_discount'
+      // If customer is found, set the discount and update formData
+      if (selectedCustomer) {
+        setCustomerDisc(selectedCustomer.customer_discount);
+        setCustomerExpedition(selectedCustomer.customer_expedition_id);
+
+        // Update formData's transaction_discount with customer_discount
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          transaction_discount: selectedCustomer.customer_discount,
+        }));
+      }
     }
+    if(name === "PPN"){
+
+      
+      let payload = {
+
+        PPN: value
+     
+      }
+  
+      Swal.fire({
+        title: "Yakin ingin mengubah status PPN?", // Updated title to be more specific
+        text: "Anda dapat mengubahnya kembali jika diperlukan", // Updated text to emphasize irreversibility
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        confirmButtonText: "Ya, ubah!", // Changed to indicate an action of updating PPN
+        cancelButtonText: "Batal", // Option to cancel
+      }).then((result) => {
+        if (result.isConfirmed) {
+          changePPN(payload, transaction_id).then(() => {
+            fungsi(transaction_id);
+          });
+        }
+      });
+      
+      
+   
+    }
+
 
 
   };
@@ -100,12 +152,16 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
     let product_id = []
     let qty = []
-
+    let current_cost = []
+    let note = []
+    let po_note = []
     newData.forEach((item) => {
 
-
+      current_cost.push(item.current_cost)
       product_id.push(item.Product.id)
       qty.push(item.qty)
+      note.push(item.note)
+      po_note.push(item.po_note)
     })
 
     if (!data) {
@@ -146,12 +202,21 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
         transaction_due_date: formData.transaction_due_date,
         transaction_customer_id: formData.transaction_customer_id,
         transaction_note: formData.transaction_note,
-        PPN: formData.PPN
+        transaction_PO_num: formData.transaction_PO_num,
+        PPN: formData.PPN,
+        transaction_invoice_number: formData.transaction_invoice_number,
+        current_cost,
+        note,
+        po_note,
+        transaction_discount: formData.transaction_discount
       }
 
       fungsi(payload).then(() => {
         handleClose()
       })
+
+
+
 
       setFormData({
         transaction_proof_number: "",
@@ -161,7 +226,8 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
         transaction_customer_id: "",
         PPN: "true",
         transaction_note: "",
-        transaction_expedition_id: ""
+        transaction_expedition_id: "",
+        transaction_PO_num: ""
       });
 
       setRows([])
@@ -173,11 +239,13 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
         product_id,
         qty,
         transaction_type: "sell",
-        transaction_id: transaction_id
+        transaction_id: transaction_id,
+        current_cost,
+        note,
+        po_note
       }
 
 
-      addProduct(payload)
 
 
       let data = {
@@ -186,12 +254,19 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
         transaction_due_date: formData.transaction_due_date,
         customer_expedition_id: customerExpedition,
         PPN: formData.PPN,
-        transaction_note: formData.transaction_note
+        transaction_note: formData.transaction_note,
+        transaction_PO_num: formData.transaction_PO_num,
+        transaction_invoice_number: formData.transaction_invoice_number,
+
       }
 
 
 
-      editTransaction(data, transaction_id)
+      editTransaction(data, transaction_id).then(() => {
+        addProduct(payload)
+      })
+
+
     }
 
     // handleClose(); // Close modal after form submission
@@ -299,15 +374,31 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
       });
 
 
-      Swal.fire({
-        icon: "success",
-        title: "Save data",
-        text: response.data.message,
-      }).then(() => {
-        fungsi(transaction_id);
-      })
+      if (response.status === 201) {
+        Swal.fire({
+          icon: "success",
+          title: "Save data",
+          text: response.data.message,
+        }).then(() => {
+          fungsi(transaction_id);
+        })
+      }
+
     } catch (error) {
-      console.log(error);
+
+      if (error.response && error.response.status === 422) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Insufficient stock to fulfill request",
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: error.message,
+        });
+      }
     }
   }
 
@@ -386,6 +477,24 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
     }
   }
 
+  async function changePPN(data, id) {
+
+
+    try {
+      const response = await axios({
+        method: "PUT",
+        url: `${process.env.REACT_APP_API_URL}/transactions/${id}`,
+        headers: {
+          authorization: localStorage.getItem("authorization"),
+        },
+        data: data,
+      });
+
+ 
+    } catch (error) {
+      console.log(error);
+    }
+  }
   async function deleteTransaction(id) {
 
 
@@ -410,6 +519,27 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
       console.log(error);
     }
   }
+
+  async function getCompanyProfileById() {
+    try {
+      const response = await axios({
+        method: "GET",
+        url: `${process.env.REACT_APP_API_URL}/profiles/1`,
+        headers: {
+          authorization: localStorage.getItem("authorization"),
+        },
+      });
+
+
+
+      setCurrentTax(response.data.data.tax_information.tax_ppn)
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+
+
 
   const handleAddRow = async () => {
     const newProduct = {
@@ -444,13 +574,16 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
 
   // Handle updating the selected barang in the row
-  const handleBarangChange = (index, selectedBarang) => {
+  const handleBarangChange = (index, option) => {
+    const selectedBarang = products.find((b) => b.id === option.value);
+
     const newRows = [...rows];
+
     newRows[index].Product = selectedBarang;
     newRows[index].current_cost = selectedBarang.cost;
+
     setRows(newRows);
   };
-
 
   const calculateTotalAmount = (rows) => {
     return rows.reduce((totals, row) => {
@@ -459,9 +592,15 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
       // Calculate discount based on percentage
       totals.totalQty += quantity;
       totals.totalCost += quantity * cost; // Calculate total cost based on quantity
-      totals.total_discount = totals.totalCost * (customerDisc / 100);
-      totals.PPN = totals.totalCost * 0.1; // 10% tax
-      totals.netto = totals.totalCost + totals.PPN - totals.total_discount;
+      totals.total_discount = totals.totalCost * (formData.transaction_discount / 100);
+
+
+      totals.total_after_disc = totals.totalCost - totals.totalCost * (formData.transaction_discount / 100);
+
+
+      totals.PPN = totals.total_after_disc * currentTax / 100; // 10% tax
+
+      totals.netto = totals.total_after_disc + totals.PPN;
 
       // Formatting to add Rp. and using toLocaleString() for proper formatting
       totals.total_discountFormatted = `Rp. ${totals.total_discount.toLocaleString('id-ID')}`;
@@ -482,7 +621,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
 
   return (
-    <Modal show={showModal} onHide={handleClose} size="xl">
+    <Modal show={showModal} onHide={handleClose} className="custom-modal">
       <Modal.Header>
         <Modal.Title>{data ? 'Penjualan Form' : 'Penjualan Form'}</Modal.Title>
 
@@ -523,8 +662,8 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
           {/* Form section */}
           <div className="form-section row g-3">
             <div className="col-md-4">
-              <label htmlFor="noBukti" className="form-label">No. Bukti#</label>
-              <input type="text" className="form-control" name="transaction_proof_number" value={formData.transaction_proof_number} onChange={handleChange} readOnly style={{ width: '100%' }} />
+              <label htmlFor="noBukti" className="form-label">No. Invoice</label>
+              <input type="text" className="form-control" name="transaction_invoice_number" value={formData.transaction_invoice_number} onChange={handleChange} style={{ width: '100%' }} />
             </div>
 
             <div className="col-md-4">
@@ -614,9 +753,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
             <div className="col-md-4 mt-2">
               <label htmlFor="tanggal" className="form-label">No. PO</label>
-              <input type="text" className="form-control" id="noInvoice" readOnly value={data ?
-                data.transaction_PO_num : ""
-              } />
+              <input type="text" className="form-control" name="transaction_PO_num" onChange={handleChange} value={formData.transaction_PO_num} />
             </div>
             <div className="col-md-4 mt-2">
               <div>
@@ -637,18 +774,23 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
           </div>
 
-          <div className="table-container mt-3">
-            <table className="table table-bordered table-striped">
+          <div className="table-container mt-3 ">
+            <table className="table-xl table-bordered table-striped">
               <thead>
                 <tr className="table-warning">
                   <th>No.</th>
-                  <th>Kode Barang</th>
-                  <th>Nama Barang</th>
-                  <th>Description</th>
-                  <th>Qty</th>
+                  <th className="search-select">Kode Barang</th>
+
+                  <th className="search-select" >Nama Barang</th>
+
+                  <th className="qty">Qty</th>
                   <th>Satuan</th>
-                  <th>Cost</th>
-                  <th>Amount</th>
+                  <th className="search-select">Price</th>
+                  <th className="search-select">Amount</th>
+                  <th>Notes</th>
+                  <th className="search-select">Modal</th>
+                  <th>PO Notes</th>
+
                   <th className="notes-col">Action</th>
                 </tr>
               </thead>
@@ -659,29 +801,39 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                       <td>{index + 1}</td>
                       <td>
                         {item.isNew ? (
-                          <select
+                          <Select
                             value={item.Product.id || ''}
-                            onChange={(e) =>
-                              handleBarangChange(
-                                index,
-                                products.find((b) => b.id === Number(e.target.value))
-                              )
+                            onChange={(option) =>
+                              handleBarangChange(index, option)
                             }
-                          >
-                            <option value="">Pilih Barang</option>
-                            {products.map((barang) => (
-                              <option key={barang.id} value={barang.id} defaultValue={1}>
-                                {barang.part_number}
-                              </option>
-                            ))}
-                          </select>
+                            options={products.map((barang) => ({
+                              value: barang.id,
+                              label: barang.part_number,
+                            }))}
+                            placeholder={item.Product.part_number || "Pilih Barang"}
+                          />
                         ) : (
                           item.Product.part_number
                         )}
                       </td>
-                      <td>{item.isNew ? item.Product.name : item.Product.name}</td>
-                      <td>{item.Product.product + item.Product.replacement_code }</td>
-                     
+                      <td>
+                        {item.isNew ? (
+                          <Select
+                            value={item.Product.id || ''}
+                            onChange={(option) =>
+                              handleBarangChange(index, option)
+                            }
+                            options={products.map((barang) => ({
+                              value: barang.id,
+                              label: barang.name,
+                            }))}
+                            placeholder={item.Product.name || "Pilih Barang"}
+                          />
+                        ) : (
+                          item.Product.name
+                        )}
+                      </td>
+
                       <td>
                         {item.isNew ? (
                           <input
@@ -702,8 +854,67 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                       </td>
                       {/* Add a conditional check for Unit */}
                       <td>{item.Product.Unit ? item.Product.Unit.unit_code : 'N/A'}</td>
-                      <td>{item.current_cost.toLocaleString()}</td>
-                      <td>{(item.qty * item.current_cost).toLocaleString()}</td>
+
+                      <td>
+                        {item.isNew ? (
+                          <input
+                            type="text"
+                            value={`Rp. ${formatCurrency(String(item.current_cost))}`}
+                            onChange={(e) => {
+                              const valueWithoutPrefix = e.target.value.replace(/^Rp.\s*/, '').replace(/,/g, ''); // Remove "Rp. " prefix and commas
+                              if (!isNaN(valueWithoutPrefix)) {
+                                setRows((prevRows) => {
+                                  const updatedRows = [...prevRows];
+                                  updatedRows[index].current_cost = valueWithoutPrefix;
+                                  return updatedRows;
+                                });
+                              }
+                            }}
+                            min="1"
+                          />
+                        ) : (
+                          `Rp. ${formatCurrency(String(item.current_cost))}`
+                        )}
+                      </td>
+                      <td>{`Rp. ${(item.qty * item.current_cost).toLocaleString()}`}</td>
+                      <td>
+                        {item.isNew ? (
+                          <input
+                            type="text"
+                            value={item.note}
+                            onChange={(e) => {
+                              setRows((prevRows) => {
+                                const updatedRows = [...prevRows];
+                                updatedRows[index].note = e.target.value;
+                                return updatedRows;
+                              });
+                            }}
+                            min="1"
+                          />
+                        ) : (
+                          item.note
+                        )}
+                      </td>
+                      <td>{item.Product.cost ? `Rp. ${(item.Product.cost).toLocaleString()}` : 'N/A'}</td>
+                      <td>
+                        {item.isNew ? (
+                          <input
+                            type="text"
+                            value={item.po_note}
+                            onChange={(e) => {
+                              setRows((prevRows) => {
+                                const updatedRows = [...prevRows];
+                                updatedRows[index].po_note = e.target.value;
+                                return updatedRows;
+                              });
+                            }}
+                            min="1"
+                          />
+                        ) : (
+                          item.po_note
+                        )}
+                      </td>
+
                       <td>
                         {index === 0 ? (
                           <span></span>
@@ -729,9 +940,11 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="8" style={{ textAlign: 'center' }}>
+
+                    <td colSpan="12" className="important-no-data">
                       No data available
                     </td>
+
                   </tr>
                 )}
               </tbody>
@@ -739,7 +952,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
           </div>
         </div>
 
-        <footer className="container mr-1">
+        <footer className="container">
 
           <div className="container mt-5">
             <div className="row">
@@ -750,19 +963,30 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                       <td>Total Amount</td>
                       <td><input type="text" className="form-control" value={data ? "Rp." + data.total_amount.toLocaleString() : totals.totalCostFormatted} readOnly /></td>
                     </tr>
+
                     <tr>
                       <td>Disc</td>
                       <td>
 
                         <div className="row">
-                          <div className="col-md-2">
+                          <div className="col-md-2 position-relative">
                             <input
                               type="text"
                               className="form-control"
-                              value={data ? data.Customer.customer_discount + '%' : customerDisc + '%'} // Example value for the new tiny input
-                              readOnly
+                              value={formData.transaction_discount}
+                              name="transaction_discount"
+                              onChange={handleChange}
+                              style={{ paddingRight: '20px' }} // Add padding to make room for the % symbol
+                              readOnly={!!data} // Conditionally set readOnly based on whether data exists
                             />
+                            <span style={{
+                              position: 'absolute',
+                              right: '35px',
+                              top: '50%',
+                              transform: 'translateY(-50%)'
+                            }}>%</span>
                           </div>
+
                           <div className="col-md-10">
                             <input
                               type="text"
@@ -776,17 +1000,40 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                       </td>
                     </tr>
 
-                    <tr>
-                      <td>Total (DPP)</td>
-                      <td><input type="text" className="form-control" value={data ? "Rp." + data.total_dpp.toLocaleString() : totals.totalCostFormatted} readOnly /></td>
-                    </tr>
-                    <tr>
+                    {(formData.PPN.toString() === "true") && (
+                      <tr>
+                        <td>Total PPN</td>
+                        <td>
+                          <div className="row">
+                            <div className="col-md-2">
+                              <input
+                                type="text"
+                                className="form-control"
+                                value={data ? data.transaction_ppn_value + '%' : currentTax + '%'} // Example value for the new tiny input
+                                readOnly
+                              />
+                            </div>
+                            <div className="col-md-10">
+                              <input
+                                type="text"
+                                className="form-control"
+                                value={data ? "Rp." + data.total_ppn.toLocaleString() : totals.PPNFormatted}
+                                readOnly
+                              />
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+
+
+                    {/* <tr>
                       <td>Total PPN</td>
                       <td><input type="text" className="form-control" value={data ? "Rp." + data.total_ppn.toLocaleString() : totals.PPNFormatted} readOnly /></td>
-                    </tr>
+                    </tr> */}
                     <tr>
                       <td>Total Netto</td>
-                      <td><input type="text" className="form-control" value={data ? "Rp." + data.total_netto.toLocaleString() : totals.nettoFormatted} readOnly /></td>
+                      <td><input type="text" className="form-control" value={data  ? "Rp." + data.total_netto.toLocaleString() : totals.nettoFormatted} readOnly /></td>
                     </tr>
                   </tbody>
                 </table>
@@ -856,7 +1103,7 @@ const TransactionSell = () => {
 
       const response = await axios({
         method: 'GET',
-        url: `${process.env.REACT_APP_API_URL}/transactions?type=sell&search=${searchTerm}&limit=${pageSize}&page=${page+1}`,
+        url: `${process.env.REACT_APP_API_URL}/transactions?type=sell&search=${searchTerm}&limit=${pageSize}&page=${page + 1}`,
         headers: {
           authorization: localStorage.getItem('authorization'),
         },
@@ -909,15 +1156,35 @@ const TransactionSell = () => {
         fetchTransactions();
       });
     } catch (error) {
-      console.log(error);
+
+      if (error.response && error.response.status === 422) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Insufficient stock to fulfill request",
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: error.message,
+        });
+      }
     }
   }
   const columns = [
-    { field: "transaction_proof_number", headerName: "No. Bukti", flex: 2 },
     { field: "transaction_invoice_number", headerName: "No. Invoice", flex: 1 },
-    { field: "transaction_date", headerName: "Tanggal Pembelian", flex: 2 },
+    { field: "transaction_surat_jalan", headerName: "No. Surat Jalan", flex: 1 },
+    { field: "transaction_PO_num", headerName: "No. PO", flex: 1 },
+    { field: "transaction_date", headerName: "Tanggal Pembelian", flex: 1 },
     { field: "transaction_due_date", headerName: "Tgl. tempo", flex: 1 },
-    { field: "Customer", headerName: "Customer", flex: 1, valueGetter: (params) => params.customer_name },
+    { field: "customer_name", headerName: "Customer", flex: 1 },
+    {
+      field: "total_netto",
+      headerName: "Harga Jual",
+      flex: 1,
+      valueGetter: (params) => `Rp. ${params.toLocaleString('id-ID')}`,
+    },
     {
       field: "PPN",
       headerName: "PPN",
@@ -937,7 +1204,7 @@ const TransactionSell = () => {
   useEffect(() => {
     fetchTransactions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[page, pageSize]);
+  }, [page, pageSize]);
 
   return (
     <>
@@ -960,7 +1227,7 @@ const TransactionSell = () => {
               <div className="col-12">
                 <div className="card">
                   <div style={{ height: "90vh", width: "100%" }}>
-                  <ThemeProvider theme={theme}>
+                    <ThemeProvider theme={theme}>
                       <DataGrid
                         rows={rows}
                         columns={columns}

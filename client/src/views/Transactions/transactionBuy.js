@@ -9,6 +9,8 @@ import { Checkbox } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from "../../components/theme";
 import SearchBar from "../../components/searchbar";
+import formatCurrency from "../../helpers/formatCurrency";
+import Select from 'react-select';
 const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
   // console.log(data, ">>>>>>");
@@ -25,7 +27,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
   const [transaction_id, setTransactionId] = useState();
   const [suppliers, setSuppliers] = useState([])
   const [products, setProducts] = useState([])
-
+  const [currentTax, setCurrentTax] = useState(0)
 
   const [rows, setRows] = useState([]);
 
@@ -36,7 +38,8 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
     transaction_due_date: "",
     transaction_supplier_id: "",
     PPN: "true",
-    transaction_note: ""
+    transaction_note: "",
+
   });
 
 
@@ -46,7 +49,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
   useEffect(() => {
     fetchSuppliers()
     fetchProducts()
-
+    getCompanyProfileById();
     // fetchTransactionById(28)
     if (data) {
       setFormData(data);
@@ -80,10 +83,42 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
+
+
     setFormData({
       ...formData,
       [name]: value,
     });
+
+    if(name === "PPN"){
+
+      
+      let payload = {
+
+        PPN: value
+     
+      }
+  
+      Swal.fire({
+        title: "Yakin ingin mengubah status PPN?", // Updated title to be more specific
+        text: "Anda dapat mengubahnya kembali jika diperlukan", // Updated text to emphasize irreversibility
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        confirmButtonText: "Ya, ubah!", // Changed to indicate an action of updating PPN
+        cancelButtonText: "Batal", // Option to cancel
+      }).then((result) => {
+        if (result.isConfirmed) {
+          changePPN(payload, transaction_id).then(() => {
+            fungsi(transaction_id);
+          });
+        }
+      });
+      
+      
+   
+    }
+
   };
 
 
@@ -97,12 +132,15 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
     let product_id = []
     let qty = []
-
+    let current_cost = []
+    let note = []
     newData.forEach((item) => {
 
 
+      current_cost.push(item.current_cost)
       product_id.push(item.Product.id)
       qty.push(item.qty)
+      note.push(item.note)
     })
 
     if (!data) {
@@ -146,7 +184,10 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
         transaction_due_date: formData.transaction_due_date,
         transaction_supplier_id: formData.transaction_supplier_id,
         transaction_note: formData.transaction_note,
-        PPN: formData.PPN
+        transaction_invoice_number: formData.transaction_invoice_number,
+        PPN: formData.PPN,
+        current_cost,
+        note
       }
 
       fungsi(payload).then(() => {
@@ -172,7 +213,9 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
         product_id,
         qty,
         transaction_type: "buy",
-        transaction_id: transaction_id
+        transaction_id: transaction_id,
+        current_cost,
+        note
       }
 
 
@@ -184,7 +227,8 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
         transaction_date: formData.transaction_date,
         transaction_due_date: formData.transaction_due_date,
         PPN: formData.PPN,
-        transaction_note: formData.transaction_note
+        transaction_note: formData.transaction_note,
+        transaction_invoice_number: formData.transaction_invoice_number,
       }
 
 
@@ -356,11 +400,26 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
         data: data,
       });
 
-      Swal.fire({
-        icon: "success",
-        title: "Save data",
-        text: response.data.message,
-      })
+ 
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async function changePPN(data, id) {
+
+
+    try {
+      const response = await axios({
+        method: "PUT",
+        url: `${process.env.REACT_APP_API_URL}/transactions/${id}`,
+        headers: {
+          authorization: localStorage.getItem("authorization"),
+        },
+        data: data,
+      });
+
+ 
     } catch (error) {
       console.log(error);
     }
@@ -416,6 +475,24 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
   };
 
 
+  async function getCompanyProfileById() {
+    try {
+      const response = await axios({
+        method: "GET",
+        url: `${process.env.REACT_APP_API_URL}/profiles/1`,
+        headers: {
+          authorization: localStorage.getItem("authorization"),
+        },
+      });
+
+
+
+      setCurrentTax(response.data.data.tax_information.tax_ppn)
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   const deleteRowLocally = (index) => {
     const updatedRows = [...rows]; // Make a copy of the rows
     updatedRows.splice(index, 1); // Remove the row at the given index
@@ -424,18 +501,16 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
 
   // Handle updating the selected barang in the row
-  const handleBarangChange = (index, selectedBarang) => {
-    ;
+  const handleBarangChange = (index, option) => {
+    const selectedBarang = products.find((b) => b.id === option.value);
 
     const newRows = [...rows];
-
 
     newRows[index].Product = selectedBarang;
     newRows[index].current_cost = selectedBarang.cost;
 
     setRows(newRows);
   };
-
 
   const calculateTotalAmount = (rows) => {
     return rows.reduce((totals, row) => {
@@ -444,8 +519,11 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
       totals.totalQty += quantity;
       totals.totalCost += quantity * cost; // Calculate total cost based on quantity
-      totals.PPN = totals.totalCost * 0.1; // 10% tax
-      totals.netto = totals.totalCost + totals.PPN;
+      
+      totals.PPN = totals.totalCost * currentTax / 100; // 10% tax
+
+
+      totals.netto =formData.PPN === "true"? totals.totalCost + totals.PPN:totals.totalCost
 
       // Formatting to add Rp. and using toLocaleString() for proper formatting
       totals.totalCostFormatted = `Rp. ${totals.totalCost.toLocaleString('id-ID')}`;
@@ -458,7 +536,6 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
   // Example usage:
   const totals = calculateTotalAmount(rows);
-
 
 
 
@@ -546,8 +623,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
             <div className="col-md-4 mt-2">
               <div>
                 <label htmlFor="noInvoice" className="form-label">No. Invoice</label>
-                <input type="text" className="form-control" id="noInvoice" readOnly value={data ?
-                  data.transaction_invoice_number : ""
+                <input type="text" className="form-control" name="transaction_invoice_number" onChange={handleChange} value={formData.transaction_invoice_number
                 } />
               </div>
 
@@ -582,13 +658,14 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
               <thead>
                 <tr className="table-warning">
                   <th>No.</th>
-                  <th>Kode Barang</th>
-                  <th>Nama Barang</th>
+                  <th className="search-select">Kode Barang</th>
+                  <th className="search-select">Nama Barang</th>
 
-                  <th>Qty</th>
+                  <th className="qty">Qty</th>
                   <th>Satuan</th>
-                  <th>Cost</th>
+                  <th className="search-select">Cost</th>
                   <th>Amount</th>
+                  <th>Notes</th>
                   <th className="notes-col">Action</th>
                 </tr>
               </thead>
@@ -599,27 +676,40 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                       <td>{index + 1}</td>
                       <td>
                         {item.isNew ? (
-                          <select
+
+                          <Select
+
                             value={item.Product.id || ''}
-                            onChange={(e) =>
-                              handleBarangChange(
-                                index,
-                                products.find((b) => b.id === Number(e.target.value))
-                              )
+                            onChange={(option) =>
+                              handleBarangChange(index, option)
                             }
-                          >
-                            <option value="">Pilih Barang</option>
-                            {products.map((barang) => (
-                              <option key={barang.id} value={barang.id} defaultValue={1}>
-                                {barang.part_number}
-                              </option>
-                            ))}
-                          </select>
+                            options={products.map((barang) => ({
+                              value: barang.id,
+                              label: barang.part_number,
+                            }))}
+                            placeholder={item.Product.part_number || "Pilih Barang"}
+                          />
                         ) : (
                           item.Product.part_number
                         )}
                       </td>
-                      <td>{item.isNew ? item.Product.name : item.Product.name}</td>
+                      <td>
+                        {item.isNew ? (
+                          <Select
+                            value={item.Product.id || ''}
+                            onChange={(option) =>
+                              handleBarangChange(index, option)
+                            }
+                            options={products.map((barang) => ({
+                              value: barang.id,
+                              label: barang.name,
+                            }))}
+                            placeholder={item.Product.name || "Pilih Barang"}
+                          />
+                        ) : (
+                          item.Product.name
+                        )}
+                      </td>
                       <td>
                         {item.isNew ? (
                           <input
@@ -640,8 +730,46 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                       </td>
                       {/* Add a conditional check for Unit */}
                       <td>{item.Product.Unit ? item.Product.Unit.unit_code : 'N/A'}</td>
-                      <td>{item.current_cost.toLocaleString()}</td>
+                      <td>
+                        {item.isNew ? (
+                          <input
+                            type="text"
+                            value={`Rp. ${formatCurrency(String(item.current_cost))}`}
+                            onChange={(e) => {
+                              const valueWithoutPrefix = e.target.value.replace(/^Rp.\s*/, '').replace(/,/g, ''); // Remove "Rp. " prefix and commas
+                              if (!isNaN(valueWithoutPrefix)) {
+                                setRows((prevRows) => {
+                                  const updatedRows = [...prevRows];
+                                  updatedRows[index].current_cost = valueWithoutPrefix;
+                                  return updatedRows;
+                                });
+                              }
+                            }}
+                            min="1"
+                          />
+                        ) : (
+                          `Rp. ${formatCurrency(String(item.current_cost))}`
+                        )}
+                      </td>
                       <td>{(item.qty * item.current_cost).toLocaleString()}</td>
+                      <td>
+                        {item.isNew ? (
+                          <input
+                            type="text"
+                            value={item.note}
+                            onChange={(e) => {
+                              setRows((prevRows) => {
+                                const updatedRows = [...prevRows];
+                                updatedRows[index].note = e.target.value;
+                                return updatedRows;
+                              });
+                            }}
+                            min="1"
+                          />
+                        ) : (
+                          item.note
+                        )}
+                      </td>
                       <td>
                         {index === 0 ? (
                           <span></span>
@@ -667,7 +795,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="8" style={{ textAlign: 'center' }}>
+                    <td colSpan="12" className="important-no-data">
                       No data available
                     </td>
                   </tr>
@@ -689,18 +817,38 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                       <td>Total Amount</td>
                       <td><input type="text" className="form-control" value={data ? "Rp." + data.total_amount.toLocaleString() : totals.totalCostFormatted} readOnly /></td>
                     </tr>
-                    <tr>
-                      <td>Disc</td>
-                      <td><input type="text" className="form-control" defaultValue={0} /></td>
-                    </tr>
+
                     <tr>
                       <td>Total (DPP)</td>
                       <td><input type="text" className="form-control" value={data ? "Rp." + data.total_dpp.toLocaleString() : totals.totalCostFormatted} readOnly /></td>
                     </tr>
-                    <tr>
-                      <td>Total PPN</td>
-                      <td><input type="text" className="form-control" value={data ? "Rp." + data.total_ppn.toLocaleString() : totals.PPNFormatted} readOnly /></td>
-                    </tr>
+                    {(formData.PPN.toString() === "true") && (
+                      <tr>
+                        <td>Total PPN</td>
+                        <td>
+                          <div className="row">
+                            <div className="col-md-2">
+                              <input
+                                type="text"
+                                className="form-control"
+                                value={data ? data.transaction_ppn_value + '%' : currentTax + '%'} // Example value for the new tiny input
+                                readOnly
+                              />
+                            </div>
+                            <div className="col-md-10">
+                              <input
+                                type="text"
+                                className="form-control"
+                                value={data ? "Rp." + data.total_ppn.toLocaleString() : totals.PPNFormatted}
+                                readOnly
+                              />
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+
+
                     <tr>
                       <td>Total Netto</td>
                       <td><input type="text" className="form-control" value={data ? "Rp." + data.total_netto.toLocaleString() : totals.nettoFormatted} readOnly /></td>
@@ -775,7 +923,7 @@ const TransactionBuy = () => {
 
       const response = await axios({
         method: 'GET',
-        url: `${process.env.REACT_APP_API_URL}/transactions?type=buy&search=${searchTerm}&limit=${pageSize}&page=${page+1}`,
+        url: `${process.env.REACT_APP_API_URL}/transactions?type=buy&search=${searchTerm}&limit=${pageSize}&page=${page + 1}`,
         headers: {
           authorization: localStorage.getItem('authorization'),
         },
@@ -833,9 +981,15 @@ const TransactionBuy = () => {
   const columns = [
     { field: "transaction_proof_number", headerName: "No. Bukti", flex: 2 },
     { field: "transaction_invoice_number", headerName: "No. Invoice", flex: 1 },
-    { field: "transaction_date", headerName: "Tanggal Pembelian", flex: 2, },
+    { field: "transaction_date", headerName: "Tanggal Pembelian", flex: 1, },
     { field: "transaction_due_date", headerName: "Tgl. tempo", flex: 1, },
-    { field: "Supplier", headerName: "Supplier", flex: 1, valueGetter: (params) => params.supplier_name },
+    { field: "supplier_name", headerName: "Supplier", flex: 1 },
+    {
+      field: "total_netto",
+      headerName: "Harga Beli",
+      flex: 1,
+      valueGetter: (params) => `Rp. ${params.toLocaleString('id-ID')}`,
+    },
     {
       field: "PPN",
       headerName: "PPN",
@@ -876,7 +1030,7 @@ const TransactionBuy = () => {
               <div className="col-12">
                 <div className="card">
                   <div style={{ height: "90vh", width: "100%" }}>
-                  <ThemeProvider theme={theme}>
+                    <ThemeProvider theme={theme}>
                       <DataGrid
                         rows={rows}
                         columns={columns}

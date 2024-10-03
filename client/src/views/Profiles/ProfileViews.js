@@ -94,7 +94,9 @@ const Profiles = () => {
         e.preventDefault();
         let data = formData;
 
+        
         console.log(data);
+        
 
         editCompanyProfileById(data)
 
@@ -391,13 +393,13 @@ const Profiles = () => {
                                                         onChange={handleTaxInfoChange}
                                                     />
                                                 </div>
-                                                <label className="col-sm-2 col-form-label">Def. Rak</label>
+                                                <label className="col-sm-2 col-form-label">PPN</label>
                                                 <div className="col-sm-4">
                                                     <input
                                                         type="text"
                                                         className="form-control"
-                                                        name="default_rack"
-                                                        value={formData.tax_information.default_rack}
+                                                        name="tax_ppn"
+                                                        value={formData.tax_information.tax_ppn}
                                                         onChange={handleTaxInfoChange}
                                                     />
                                                 </div>

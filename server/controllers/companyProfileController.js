@@ -85,7 +85,7 @@ class CompanyProfileController {
                 await Tax_Information.create({
                     company_id: companyProfile.id,
                     tax_number: tax_information.tax_number,
-                    default_rack: tax_information.default_rack,
+                    tax_ppn: tax_information.tax_ppn,
                 }, { transaction: t });
             }
 
@@ -251,7 +251,7 @@ class CompanyProfileController {
             if (tax_information) {
                 await Tax_Information.update({
                     tax_number: tax_information.tax_number,
-                    default_rack: tax_information.default_rack,
+                    tax_ppn: tax_information.tax_ppn,
                 }, {
                     where: { company_id: companyProfile.id },
                     transaction: t,

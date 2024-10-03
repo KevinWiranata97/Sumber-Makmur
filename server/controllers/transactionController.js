@@ -20,11 +20,12 @@ class Controller {
 
   
   // Controller function to get paginated and searchable transactions
+
   static async getTransaction(req, res, next) {
     try {
       // Extract query parameters
-      const { type} = req.query;
-      const searchQuery = req.query.search || ''; // Defau
+      const { type } = req.query;
+      const searchQuery = req.query.search || ''; // Default search query is empty
       const limit = parseInt(req.query.limit) || 10; // Default limit is 10
       let page = parseInt(req.query.page);
   
@@ -32,89 +33,137 @@ class Controller {
       page = !isNaN(page) && page > 0 ? page : 1;
       const offset = (page - 1) * limit; // Calculate the offset for pagination (1-based page)
   
-      // Construct the where clause based on the presence of the type and search parameters
-    
+      // Construct the base SQL query for fetching data
+      let sqlQuery = `
+      SELECT
+        t.id, t.transaction_invoice_number, t.transaction_proof_number, t.transaction_surat_jalan,
+        to_char(t.transaction_date, 'DD/MM/YYYY') as transaction_date, -- Format the transaction_date
+        to_char(t.transaction_due_date, 'DD/MM/YYYY') as transaction_due_date, -- Format the transaction_due_date
+        t.transaction_type, t."PPN", t."transaction_PO_num", t."transaction_ppn_value", t."transaction_discount",
+        s.id AS supplier_id, s.supplier_name,
+        c.id AS customer_id, c.customer_name, c.customer_discount,
+        
+        array_agg(json_build_object(
+          'qty', tp.qty,
+          'product_name', p.name,
+          'cost', p.cost,
+          'current_cost', tp.current_cost  -- Adding current_cost from Transaction_Products
+        )) AS products -- Aggregating products as an array of objects
+      FROM
+        "Transactions" t
+      LEFT JOIN
+        "Suppliers" s ON t.transaction_supplier_id = s.id
+      LEFT JOIN
+        "Customers" c ON t.transaction_customer_id = c.id
+      INNER JOIN
+        "Transaction_Products" tp ON t.id = tp.transaction_id
+      INNER JOIN
+        "Products" p ON tp.product_id = p.id
+      WHERE
+        t.status = true
+    `;
   
-   
   
-      const whereClause = {
-        status: true,
-        [Op.or]: [
-          {
-            transaction_invoice_number: {
-              [Op.iLike]: `%${searchQuery}%`, // Case-insensitive search in transaction_invoice_number field
-            },
-          },
-          {
-            transaction_proof_number: {
-              [Op.iLike]: `%${searchQuery}%`, // Case-insensitive search in transaction_proof_number field
-            },
-          },
-   
-       
-        ].filter(Boolean), // Filter out any null conditions
-      };
+      // Add search conditions for invoice, proof number, surat jalan, customer name, transaction date, and due date
+      sqlQuery += `
+        AND (
+          t.transaction_invoice_number ILIKE :searchQuery
+          OR t.transaction_proof_number ILIKE :searchQuery
+          OR t.transaction_surat_jalan ILIKE :searchQuery
+          OR c.customer_name ILIKE :searchQuery -- Search by customer name
+          OR to_char(t.transaction_date, 'DD/MM/YYYY') ILIKE :searchQuery -- Search by transaction date in DD/MM/YYYY format
+          OR to_char(t.transaction_due_date, 'DD/MM/YYYY') ILIKE :searchQuery -- Search by due date in DD/MM/YYYY format
+        )
+      `;
+  
+      // Add condition for type (buy or sell) if present
       if (type && (type === 'buy' || type === 'sell')) {
-        whereClause.transaction_type = type;
+        sqlQuery += ' AND t.transaction_type = :type';
       }
-      // Fetch the transactions with search, pagination, and related models (Supplier, Customer, Transaction_Product)
-      const { count, rows: transactions } = await Transaction.findAndCountAll({
-        where: whereClause,
-        include: [
-          {
-            model: Supplier,
-            attributes: ['id', 'supplier_name'], // Include supplier name
-            required: false, // LEFT JOIN Supplier
-          },
-          {
-            model: Customer,
-            attributes: ['id', 'customer_name'], // Include customer name
-            required: false, // LEFT JOIN Customer
-          },
-          {
-            model: Transaction_Product,
-            required: true, // INNER JOIN Transaction_Product
-            include: [
-              {
-                model: Product,
-                attributes: ['id', 'name'], // Include Product name
-              },
-            ],
-          },
-        ],
-        attributes: {
-          exclude: ['status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt'],
-        },
-        order: [['id', 'ASC']], // Sort by id in ascending order
-        limit, // Set limit for pagination
-        offset, // Set offset for pagination
+  
+      // Add grouping by transaction to allow aggregation
+      sqlQuery += `
+        GROUP BY t.id, s.id, c.id
+        ORDER BY t.id ASC
+        LIMIT :limit OFFSET :offset
+      `;
+  
+      // Count query for pagination
+      const countQuery = `
+        SELECT COUNT(DISTINCT t.id) AS total
+        FROM "Transactions" t
+        LEFT JOIN "Customers" c ON t.transaction_customer_id = c.id
+        WHERE t.status = true
+        AND (
+          t.transaction_invoice_number ILIKE :searchQuery
+          OR t.transaction_proof_number ILIKE :searchQuery
+          OR t.transaction_surat_jalan ILIKE :searchQuery
+          OR c.customer_name ILIKE :searchQuery -- Search by customer name
+          OR to_char(t.transaction_date, 'DD/MM/YYYY') ILIKE :searchQuery -- Search by transaction date in DD/MM/YYYY format
+          OR to_char(t.transaction_due_date, 'DD/MM/YYYY') ILIKE :searchQuery -- Search by due date in DD/MM/YYYY format
+        )
+      `;
+  
+      // Prepare the query parameters
+      const queryParams = {
+        searchQuery: `%${searchQuery}%`,
+        limit,
+        offset,
+        type,
+      };
+  
+      // Execute the raw SQL queries
+      const transactions = await sequelize.query(sqlQuery, {
+        replacements: queryParams,
+        type: sequelize.QueryTypes.SELECT,
       });
-      // After fetching the transactions, calculate the total amount
+  
+      const countResult = await sequelize.query(countQuery, {
+        replacements: queryParams,
+        type: sequelize.QueryTypes.SELECT,
+      });
+  
+      const count = countResult[0].total;
+
+    
+      // After fetching the transactions, calculate the total amount for each product in the transaction
       const transactionsWithTotalAmount = transactions.map((transaction) => {
-        // Calculate the total amount for each transaction
-        const total_amount = transaction.Transaction_Products.reduce((sum, product) => {
-          return sum + product.qty * product.Product.cost;
-        }, 0); // Start from 0
+        const total_dpp = transaction.products.reduce((sum, product) => {
+          return sum + product.qty * product.current_cost;
+        }, 0); // Sum of qty * cost for each product
+        
+        let customer_discount = transaction.transaction_discount
+
+        
+      
+        
+        
+        let total_discount
+        if (transaction.transaction_type) {
+          total_discount = total_dpp - total_dpp * (customer_discount / 100); // Calculate discount based on percentage
+        }
+        
+        let total_ppn
+        if (transaction.PPN === true) {
+          
+          
+          total_ppn =total_discount !== 0? total_discount * transaction.transaction_ppn_value/100:total_dpp * transaction.transaction_ppn_value/100
+          
+          
+        } else {
+          total_ppn = 0
+        }
+
+
+ 
   
-        // Format the transaction date
-        const fix_transaction_date = new Date(transaction.transaction_date).toLocaleDateString('en-GB', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-        });
-  
-        const fix_transaction_due_date = new Date(transaction.transaction_due_date).toLocaleDateString('en-GB', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-        });
-  
-        // Add the total amount and formatted date to the transaction object
+        
+        const total_netto =  total_ppn + total_discount
+
         return {
-          ...transaction.toJSON(), // Convert the Sequelize object to a plain object
-          total_amount,
-          transaction_date: fix_transaction_date,
-          transaction_due_date: fix_transaction_due_date, // Include the formatted transaction date
+          ...transaction,
+          total_netto,
+          total_amount:total_dpp
         };
       });
   
@@ -136,13 +185,18 @@ class Controller {
       next(error);
     }
   }
+  
+  
+  
+    
+  
   static async createTransaction(req, res, next) {
     let transaction;
     const {
       transaction_date,
       transaction_due_date,
-      // transaction_PO_num,
-      // transaction_surat_jalan,
+      transaction_PO_num,
+      transaction_invoice_number,
       transaction_customer_id,
       transaction_supplier_id,
       transaction_note,
@@ -150,11 +204,15 @@ class Controller {
       transaction_type,
       product_id,
       qty,
+      current_cost,
+      note,
+      po_note,
       transaction_payment_due_time,
       PPN,
+      transaction_discount
     } = req.body;
     const { username } = req.userAccess;
-
+    
     try {
       // Start a Sequelize transaction
       const t = await sequelize.transaction();
@@ -163,7 +221,29 @@ class Controller {
         order: [['id', 'DESC']],
         attributes: ['id']
       });
+      const companyProfile = await Company_Profile.findOne({
+        where: {
+            company_name: "CV.SUMBER MAKMUR DIESEL",
+            status: true, // Only get non-deleted company profiles
+        },
+        include: [
+            {
+                model: Bank_Account,
+                as: 'bank_accounts',
+            },
+            {
+                model: Tax_Information,
+                as: 'tax_information',
+            },
+        ],
+    });
 
+
+    let ppn
+ 
+    if(companyProfile.tax_information.tax_ppn){
+      ppn = companyProfile.tax_information.tax_ppn
+    }
 
       try {
         // Create the transaction record
@@ -171,17 +251,19 @@ class Controller {
           {
             transaction_date,
             transaction_due_date,
-            transaction_PO_num: generateRandom6DigitNumber(),
+            transaction_PO_num: transaction_PO_num,
             transaction_surat_jalan: generateSuratJalan(transaction ? transactionLatest.id : 1),
             transaction_customer_id,
             transaction_supplier_id,
             transaction_note,
             transaction_PO_note,
             transaction_type,
-            transaction_invoice_number: generateRandom6DigitNumber(),
+            transaction_invoice_number: transaction_invoice_number,
             transaction_proof_number: generateCustomString(generateRandom6DigitNumber()),
             PPN,
             transaction_payment_due_time,
+            transaction_ppn_value:ppn,
+            transaction_discount,
             createdBy: username,
           },
           { transaction: t }
@@ -196,7 +278,7 @@ class Controller {
               },
             });
 
-            console.log(product.cost);
+         
 
             if (!product) {
               throw new Error(`Product with ID ${productId} not found.`);
@@ -215,7 +297,11 @@ class Controller {
               // Decrease stock
               product.stock -= parseInt(qty[index]);
               if (product.stock < 0) {
-                throw new Error(`Insufficient stock for product with ID ${productId}.`);
+                throw {
+                  name: "insufficient_stock",
+                  code: 422,
+                  msg: "not enought product stock",
+                };
               }
             }
 
@@ -225,10 +311,12 @@ class Controller {
             // Create entry in Transaction_Products table
             await Transaction_Product.create(
               {
-                current_cost: product.cost,
                 transaction_id: transaction.id,
                 product_id: productId,
                 qty: qty[index],
+                current_cost:current_cost[index],
+                note:note? note[index]:"",
+                po_note:po_note?po_note[index]:""
               },
               { transaction: t }
             );
@@ -274,6 +362,7 @@ class Controller {
             where: {
               status: true
             },
+            order: [['id', 'ASC']],
             include: [
               {
                 model: Product,
@@ -325,29 +414,31 @@ class Controller {
 
 
       const total_dpp = transactions.Transaction_Products.reduce((sum, product) => {
-        return sum + (product.qty * product.Product.cost);
+        return sum + (product.qty * product.current_cost);
       }, 0);
 
-      // Calculate total PPN (10% of total DPP)
-      let total_ppn
-      if (transactions.PPN === true) {
-        total_ppn = total_dpp * 0.1;
-      } else {
-        total_ppn = 0
-      }
-      let customer_discount = transactions.Customer ? transactions.Customer.customer_discount : 0
+
+      let customer_discount = transactions.transaction_discount
 
 
       let total_discount
       if (transactions.transaction_type) {
-        total_discount = total_dpp * (customer_discount / 100); // Calculate discount based on percentage
+        total_discount = total_dpp - total_dpp * (customer_discount / 100); // Calculate discount based on percentage
       }
+      // Calculate total PPN (10% of total DPP)
+      let total_ppn
+      if (transactions.PPN === true) {
+        total_ppn = total_discount !== 0 ? total_discount * transactions.transaction_ppn_value/100:total_dpp * transactions.transaction_ppn_value/100
+      } else {
+        total_ppn = 0
+      }
+   
 
 
 
       const fix_transaction_date = new Date(transactions.transaction_date).toISOString().split('T')[0];
       const fix_transaction_due_date = new Date(transactions.transaction_due_date).toISOString().split('T')[0];
-      const total_netto = total_dpp + total_ppn - total_discount
+      const total_netto =  total_ppn + total_discount
 
       const transactionWithTotalAmount = {
         ...transactions.toJSON(), // Convert Sequelize instance to plain object
@@ -417,6 +508,7 @@ class Controller {
         transaction_date,
         transaction_due_date,
         transaction_PO_num,
+        transaction_invoice_number,
         transaction_surat_jalan,
         transaction_supplier_id,
         transaction_note,
@@ -446,6 +538,7 @@ class Controller {
         transaction_PO_num,
         transaction_surat_jalan,
         transaction_supplier_id,
+        transaction_invoice_number,
         transaction_note,
         transaction_PO_note,
         PPN,
@@ -524,7 +617,7 @@ class Controller {
     try {
 
 
-      const { transaction_id, product_id, qty, transaction_type } = req.body
+      const { transaction_id, product_id, qty, transaction_type,current_cost,note,po_note } = req.body
 
       const transaction = await Transaction.findOne({
         where: {
@@ -572,7 +665,11 @@ class Controller {
               // Decrease stock
               product.stock -= parseInt(qty[index]);
               if (product.stock < 0) {
-                throw new Error(`Insufficient stock for product with ID ${productId}.`);
+                throw {
+                  name: "insufficient_stock",
+                  code: 422,
+                  msg: "not enought product stock",
+                };
               }
             }
 
@@ -582,10 +679,13 @@ class Controller {
             // Create entry in Transaction_Products table
             await Transaction_Product.create(
               {
-                current_cost: product.cost,
+                current_cost: current_cost[index],
+              
                 transaction_id: transaction.id,
                 product_id: productId,
                 qty: qty[index],
+                 note:note? note[index]:"",
+                po_note:po_note?po_note[index]:""
               },
               { transaction: t }
             );

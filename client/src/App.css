@@ -135,9 +135,15 @@ table {
 }
 
 th, td {
-  text-align: left;
-  padding: 14px 18px; /* More padding for a bolder look */
+  text-align: left !important;
+  padding: 10px 8px !important; /* More padding for a bolder look */
   border-bottom: 2px solid #e0e0e0; /* Thicker row borders */
+}
+
+tr {
+ 
+  padding: 10px 8px; /* More padding for a bolder look */
+ 
 }
 
 th {
@@ -272,4 +278,24 @@ input::placeholder {
 
 .search-input:focus {
   border-color: #aaa;
+}
+
+.custom-modal .modal-dialog {
+  max-width: 55%; /* Adjust this value as needed */
+  height: 50%;
+}
+
+.search-select {
+  width: 220px; /* Adjust the width as needed */
+}
+
+.qty {
+  width: 150px; /* Adjust the width as needed */
+
+}
+
+
+.important-no-data {
+  text-align: center !important;
+
 }
