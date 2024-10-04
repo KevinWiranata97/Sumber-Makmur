@@ -20,9 +20,12 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
   const [expeditions, setExpeditions] = useState([])
   const [products, setProducts] = useState([])
   const [rows, setRows] = useState([]);
-  const [customerDisc, setCustomerDisc] = useState(0)
+  // const [customerDisc, setCustomerDisc] = useState(0)
+  // const [customerName, setCustomerName] = useState()
+
   const [customerExpedition, setCustomerExpedition] = useState(0)
   const [currentTax, setCurrentTax] = useState(0)
+
   const [formData, setFormData] = useState({
     transaction_proof_number: "",
     transaction_invoice_number: "",
@@ -81,7 +84,9 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const numericValue = value.replace(/[^0-9]/g, ''); // Allow only numbers
+
+
+    const numericValue = typeof value === 'string' ? value.replace(/[^0-9]/g, '') : value;
 
     const validatedValue = name === 'transaction_discount' ? Math.min(numericValue, 100) : value;
 
@@ -92,54 +97,61 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
     }));
 
 
-    // Only check for customer selection when the field "transaction_customer_id" changes
-    if (name === "transaction_customer_id") {
-      const selectedCustomer = customers.find((customer) => customer.id === parseInt(value));
 
-      // If customer is found, set the discount and update formData
-      if (selectedCustomer) {
-        setCustomerDisc(selectedCustomer.customer_discount);
-        setCustomerExpedition(selectedCustomer.customer_expedition_id);
+    if (name === "PPN") {
 
-        // Update formData's transaction_discount with customer_discount
-        setFormData((prevFormData) => ({
-          ...prevFormData,
-          transaction_discount: selectedCustomer.customer_discount,
-        }));
-      }
-    }
-    if(name === "PPN"){
 
-      
       let payload = {
 
         PPN: value
-     
+
       }
-  
-      Swal.fire({
-        title: "Yakin ingin mengubah status PPN?", // Updated title to be more specific
-        text: "Anda dapat mengubahnya kembali jika diperlukan", // Updated text to emphasize irreversibility
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#d33",
-        confirmButtonText: "Ya, ubah!", // Changed to indicate an action of updating PPN
-        cancelButtonText: "Batal", // Option to cancel
-      }).then((result) => {
-        if (result.isConfirmed) {
-          changePPN(payload, transaction_id).then(() => {
-            fungsi(transaction_id);
-          });
-        }
-      });
-      
-      
-   
+
+      if (data) {
+        Swal.fire({
+          title: "Yakin ingin mengubah status PPN?", // Updated title to be more specific
+          text: "Anda dapat mengubahnya kembali jika diperlukan", // Updated text to emphasize irreversibility
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#d33",
+          confirmButtonText: "Ya, ubah!", // Changed to indicate an action of updating PPN
+          cancelButtonText: "Batal", // Option to cancel
+        }).then((result) => {
+          if (result.isConfirmed) {
+            changePPN(payload, transaction_id).then(() => {
+              fungsi(transaction_id);
+            });
+          }
+        });
+      }
+
     }
-
-
-
   };
+
+  const handleCustomerSelectChange = (selectedOption) => {
+    // Update formData with the selected customer ID
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      transaction_customer_id: selectedOption.id, // Update the ID in formData
+    }));
+
+    // Implement the logic for updating other states based on selected customer
+    const selectedCustomer = customers.find((customer) => customer.id === parseInt(selectedOption.id));
+
+    if (selectedCustomer) {
+      // Update additional customer-related states
+
+      setCustomerExpedition(selectedCustomer.customer_expedition_id);
+
+
+      // Update formData's transaction_discount with customer_discount
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        transaction_discount: selectedCustomer.customer_discount,
+      }));
+    }
+  };
+
 
 
 
@@ -481,7 +493,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
 
     try {
-      const response = await axios({
+      await axios({
         method: "PUT",
         url: `${process.env.REACT_APP_API_URL}/transactions/${id}`,
         headers: {
@@ -490,7 +502,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
         data: data,
       });
 
- 
+
     } catch (error) {
       console.log(error);
     }
@@ -620,6 +632,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
 
 
+
   return (
     <Modal show={showModal} onHide={handleClose} className="custom-modal">
       <Modal.Header>
@@ -670,21 +683,19 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
               <label htmlFor="customer" className="form-label">Customer</label>
 
               {!data ? (
-                // If customers data is available, render the select dropdown
-                <select
-                  className="form-select"
-                  name="transaction_customer_id"
-                  onChange={handleChange}
-                  value={formData.transaction_customer_id}
-                  style={{ width: '100%', height: '55%' }}
-                >
-                  <option value="">Pilih Customer</option> {/* Default option */}
-                  {customers.map((customer) => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.customer_name}
-                    </option>
-                  ))}
-                </select>
+
+                <Select
+                  value={customers.find((customer) => customer.id === formData.transaction_customer_id) || null} // Match selected value
+                  onChange={handleCustomerSelectChange} // Call the separate function
+                  options={customers}
+                  getOptionLabel={(option) => option.customer_name} // Display the customer name
+                  getOptionValue={(option) => option.id} // Use the customer ID as the value
+                  placeholder="Pilih Customer"
+                />
+
+
+
+
               ) : (
                 // If no customers data, render a normal input field
                 <input
@@ -711,26 +722,19 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
               <input type="date" className="form-control" value={formData.transaction_due_date} onChange={handleChange} name="transaction_due_date" style={{ width: '100%', height: "55%" }} />
             </div>
 
-            <div className="col-md-4">
+            <div className="col-md-4 mt-2">
               <label htmlFor="customer" className="form-label">Expedisi</label>
-              <select
-                className="form-select"
-                name="customer_expedition_id"
-                onChange={(e) => setCustomerExpedition(e.target.value)}
-                value={customerExpedition}
-                style={{ width: '100%', height: '55%' }}
-              >
-                <option value="">Pilih Expedisi</option> {/* Default option */}
-                {customers.length > 0 ? (
-                  expeditions.map((expedition) => (
-                    <option key={expedition.id} value={expedition.id}>
-                      {expedition.expedition_name}
-                    </option>
-                  ))
-                ) : (
-                  <option disabled>Tidak ada ekspedisi tersedia</option>
-                )}
-              </select>
+              <Select
+                value={expeditions.find((expedition) => expedition.id === customerExpedition) || null} // Match selected value
+                onChange={(option) => setCustomerExpedition(option.id)} // Update the customerExpedition state with the selected option
+                options={expeditions}
+                getOptionLabel={(option) => option.expedition_name} // Display the expedition name
+                getOptionValue={(option) => option.id} // Use the expedition ID as the value
+                placeholder="Pilih Expedisi"
+
+
+              />
+
             </div>
 
             <div className="col-md-4 mt-2">
@@ -1033,7 +1037,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                     </tr> */}
                     <tr>
                       <td>Total Netto</td>
-                      <td><input type="text" className="form-control" value={data  ? "Rp." + data.total_netto.toLocaleString() : totals.nettoFormatted} readOnly /></td>
+                      <td><input type="text" className="form-control" value={data ? "Rp." + data.total_netto.toLocaleString() : totals.nettoFormatted} readOnly /></td>
                     </tr>
                   </tbody>
                 </table>
@@ -1111,13 +1115,15 @@ const TransactionSell = () => {
 
       // Update the rows and total row count based on the response
       setRows(response.data.data);
-      setRowCount(response.data.pagination.totalItems); // Total rows available
+      setRowCount(Number(response.data.pagination.totalItems)); // Total rows available
+
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
   };
+
 
   async function fetchTransactionById(id) {
     try {

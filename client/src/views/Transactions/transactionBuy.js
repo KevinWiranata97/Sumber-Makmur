@@ -99,28 +99,29 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
      
       }
   
-      Swal.fire({
-        title: "Yakin ingin mengubah status PPN?", // Updated title to be more specific
-        text: "Anda dapat mengubahnya kembali jika diperlukan", // Updated text to emphasize irreversibility
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#d33",
-        confirmButtonText: "Ya, ubah!", // Changed to indicate an action of updating PPN
-        cancelButtonText: "Batal", // Option to cancel
-      }).then((result) => {
-        if (result.isConfirmed) {
-          changePPN(payload, transaction_id).then(() => {
-            fungsi(transaction_id);
-          });
-        }
-      });
+      if(data){
+        Swal.fire({
+          title: "Yakin ingin mengubah status PPN?", // Updated title to be more specific
+          text: "Anda dapat mengubahnya kembali jika diperlukan", // Updated text to emphasize irreversibility
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#d33",
+          confirmButtonText: "Ya, ubah!", // Changed to indicate an action of updating PPN
+          cancelButtonText: "Batal", // Option to cancel
+        }).then((result) => {
+          if (result.isConfirmed) {
+            changePPN(payload, transaction_id).then(() => {
+              fungsi(transaction_id);
+            });
+          }
+        });
+      }
       
       
    
     }
 
   };
-
 
 
 
@@ -391,7 +392,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
 
     try {
-      const response = await axios({
+    await axios({
         method: "PUT",
         url: `${process.env.REACT_APP_API_URL}/transactions/${id}`,
         headers: {
@@ -410,7 +411,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
 
     try {
-      const response = await axios({
+       await axios({
         method: "PUT",
         url: `${process.env.REACT_APP_API_URL}/transactions/${id}`,
         headers: {
@@ -590,24 +591,24 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
             <div className="col-md-4 mt-2">
               <label htmlFor="supplier" className="form-label">Supplier</label>
-              <select
-                className="form-select"
-                name="transaction_supplier_id"
-                onChange={handleChange}
-                value={formData.transaction_supplier_id}
-                style={{ width: '100%', height: '55%' }}
-              >
-                <option value="">Select Supplier</option> {/* Default option */}
-                {suppliers.length > 0 ? (
-                  suppliers.map((supplier) => (
-                    <option key={supplier.id} value={supplier.id}>
-                      {supplier.supplier_name}
-                    </option>
-                  ))
-                ) : (
-                  <option disabled>No suppliers available</option>
-                )}
-              </select>
+ 
+
+              <Select
+                value={suppliers.find((supplier) => supplier.id === formData.transaction_supplier_id) || null} // Match selected value
+                onChange={(option) =>
+                  setFormData((prevFormData) => ({
+                    ...prevFormData,
+                    transaction_supplier_id: option.id, // Update the ID in formData
+                  }))
+                }
+                options={suppliers}
+                getOptionLabel={(option) => option.supplier_name} // Display the expedition name
+                getOptionValue={(option) => option.id} // Use the expedition ID as the value
+                placeholder="Pilih Expedisi"
+
+
+              />
+
             </div>
 
 
@@ -931,7 +932,8 @@ const TransactionBuy = () => {
 
       // Update the rows and total row count based on the response
       setRows(response.data.data);
-      setRowCount(response.data.pagination.totalItems); // Total rows available
+      setRowCount(Number(response.data.pagination.totalItems)); // Total rows available
+
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {

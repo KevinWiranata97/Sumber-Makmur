@@ -188,7 +188,8 @@ const Area = () => {
 
       // Update the rows and total row count based on the response
       setRows(response.data.data);
-      setRowCount(response.data.pagination.totalItems); // Total rows available
+      setRowCount(Number(response.data.pagination.totalItems));
+ // Total rows available
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
