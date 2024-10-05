@@ -25,7 +25,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
   const [customerExpedition, setCustomerExpedition] = useState(0)
   const [currentTax, setCurrentTax] = useState(0)
-
+  const [isSuratJalanChecked, setIsSuratJalanChecked] = useState(false);
   const [formData, setFormData] = useState({
     transaction_proof_number: "",
     transaction_invoice_number: "",
@@ -319,18 +319,18 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
   const handleDownload = async () => {
     try {
-
-
+      // Determine the API URL based on whether the checkbox is checked
+      const apiUrl = isSuratJalanChecked
+        ? `${process.env.REACT_APP_API_URL}/transactions/generate-surat-jalan/${transaction_id}`
+        : `${process.env.REACT_APP_API_URL}/transactions/generate-invoice/${transaction_id}`;
 
       const response = await axios({
         method: "GET",
-        url: `${process.env.REACT_APP_API_URL}/transactions/generate-invoice/${transaction_id}`,
+        url: apiUrl,
         headers: {
           authorization: localStorage.getItem("authorization"),
         },
       });
-
-
 
       // Extract the fileUrl from the API response
       const fileUrl = response.data.data.fileUrl;
@@ -338,12 +338,12 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
       // Create a hidden <a> element and trigger the download
       const link = document.createElement('a');
       link.href = fileUrl;
-      link.download = 'invoice.pdf'; // Optional: specify the file name for download
+      link.download = isSuratJalanChecked ? 'surat_jalan.pdf' : 'invoice.pdf'; // Change file name based on the checkbox
       document.body.appendChild(link); // Append the link to the body
       link.click(); // Programmatically trigger the click
       document.body.removeChild(link); // Clean up by removing the link
     } catch (error) {
-      console.error('Error downloading the invoice:', error);
+      console.error('Error downloading the document:', error);
       // Handle error (e.g., show a message to the user)
     }
   };
@@ -627,7 +627,9 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
   // Example usage:
   const totals = calculateTotalAmount(rows);
 
-
+  const handleCheckboxChange = (event) => {
+    setIsSuratJalanChecked(event.target.checked);
+  };
 
 
 
@@ -676,7 +678,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
           <div className="form-section row g-3">
             <div className="col-md-4">
               <label htmlFor="noBukti" className="form-label">No. Invoice</label>
-              <input type="text" className="form-control" name="transaction_invoice_number" value={formData.transaction_invoice_number} onChange={handleChange} style={{ width: '100%' }} />
+              <input type="text" className="form-control" name="transaction_invoice_number" value={formData.transaction_invoice_number} onChange={handleChange} style={{ width: '100%' }} readOnly />
             </div>
 
             <div className="col-md-4">
@@ -770,11 +772,19 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
             </div>
 
             <div className="col-md-2 mt-2">
-              <div className="form-check stock">
-                <input className="form-check-input custom-checkbox" type="checkbox" name="transaction_type" />
-                <label className="form-check-label mb-2" htmlFor="pembelianStok">Cetak Surat Jalan</label>
-              </div>
-            </div>
+        <div className="form-check stock">
+          <input
+            className="form-check-input custom-checkbox"
+            type="checkbox"
+            name="transaction_type"
+            checked={isSuratJalanChecked}
+            onChange={handleCheckboxChange} // Update state on checkbox change
+          />
+          <label className="form-check-label mb-2" htmlFor="pembelianStok">
+            Cetak Surat Jalan
+          </label>
+        </div>
+      </div>
 
           </div>
 

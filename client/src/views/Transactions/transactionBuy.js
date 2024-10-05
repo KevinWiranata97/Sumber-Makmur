@@ -280,7 +280,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
       const response = await axios({
         method: "GET",
-        url: `${process.env.REACT_APP_API_URL}/transactions/generate-invoice/${transaction_id}`,
+        url: `${process.env.REACT_APP_API_URL}/transactions/generate-invoice-buy/${transaction_id}`,
         headers: {
           authorization: localStorage.getItem("authorization"),
         },

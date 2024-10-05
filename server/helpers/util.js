@@ -15,16 +15,59 @@ function generateCustomString(uniqueId) {
     return `FB ${day}/${month}/${uniqueId}`;
 }
 
+function generateSuratJalanNumber(uniqueId) {
+  // Get the current date
+  const now = new Date();
 
-function generateSuratJalan(uniqueId) {
-    // Get the current date
-    const now = new Date();
+  // Extract the current year and month
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1; // getMonth() returns 0-11, so we add 1
 
-    // Extract the current year
-    const year = now.getFullYear();
+  // Map the month number to Roman numerals
+  const romanMonths = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 
-    // Create the final string
-    return `${uniqueId}/SJ/CV/IV/${year}`;
+  // Get the Roman numeral for the current month
+  const romanMonth = romanMonths[month - 1]; // Subtract 1 to match the array index
+
+  // Create the final string
+  return `${uniqueId}/SJ/CV/${romanMonth}/${year}`;
+}
+
+
+function generateInvoiceNumberPPN(uniqueId) {
+  // Get the current date
+  const now = new Date();
+
+  // Extract the current year and month
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1; // getMonth() returns 0-11, so we add 1
+
+  // Map the month number to Roman numerals
+  const romanMonths = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+
+  // Get the Roman numeral for the current month
+  const romanMonth = romanMonths[month - 1]; // Subtract 1 to match the array index
+
+  // Create the final string
+  return `${uniqueId}/CV/SMD/${romanMonth}/${year}`;
+}
+
+function generateInvoiceNumberNoPPN(uniqueId) {
+  // Get the current date
+  const now = new Date();
+
+  // Extract the current year and month
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1; // getMonth() returns 0-11, so we add 1
+
+  // Map the month number to Roman numerals
+  const romanMonths = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+
+  // Get the Roman numeral for the current month
+  const romanMonth = romanMonths[month - 1]; // Subtract 1 to match the array index
+
+  // Create the final string
+  return `${uniqueId}/SMD/${romanMonth}/${year}`;
 }
 
 function formatDateToDDMMYYYY(dateInput) {
@@ -105,8 +148,10 @@ function formatDateToDDMMYYYY(dateInput) {
 module.exports = {
     generateCustomString,
     generateRandom6DigitNumber,
-    generateSuratJalan,
+    generateSuratJalanNumber,
     formatDateToDDMMYYYY,
     convertToTerbilang,
-    formatDateToYYYYMMDD
+    formatDateToYYYYMMDD,
+    generateInvoiceNumberNoPPN,
+    generateInvoiceNumberPPN
 }
