@@ -262,8 +262,9 @@ function generateInvoice(invoiceData, filePath) {
 
 function generateInvoiceNonPPN(invoiceData, filePath) {
   const doc = new PDFDocument({
-    size: [684, 792],
-    layout: 'landscape'
+    size: [ 684,396],
+    layout: 'landscape',
+    
   });
 
 
