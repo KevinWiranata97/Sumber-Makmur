@@ -300,3 +300,60 @@ input::placeholder {
   text-align: center !important;
 
 }
+/* Add this to your CSS file or in the style section */
+@media (max-width: 768px) {
+  .main-sidebar {
+    width: 50%; /* Make the sidebar full width on smaller screens */
+    position: fixed; /* Make sure it's always visible */
+    bottom: 0;
+    top: 0;
+    z-index: 1000;
+  }
+
+  .main-sidebar img {
+    width: 70%; /* Adjust logo size for smaller screens */
+  }
+
+  .nav-link p {
+    font-size: 14px; /* Reduce text size for smaller screens */
+  }
+
+  .nav-icon {
+    font-size: 16px; /* Adjust icon size */
+  }
+}
+.modal-tabs {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.tab-title {
+  font-size: 16px;
+  margin-right: 20px;
+  cursor: pointer;
+  color: #777;
+  position: relative;
+  padding: 5px 10px;
+}
+
+.tab-title:hover {
+  color: #000;
+}
+
+.active-tab {
+  color: #007bff; /* Active tab text color */
+  font-weight: bold;
+  background-color: #e0f0ff; /* Light blue background for active tab */
+  border-radius: 20px; /* Slightly rounded background */
+  position: relative;
+}
+
+.active-tab::after {
+  content: '';
+  width: 100%;
+  height: 2px;
+  background-color: #007bff; /* Blue underline */
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+}

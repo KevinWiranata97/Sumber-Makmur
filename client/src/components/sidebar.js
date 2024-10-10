@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 export default function Sidebar() {
   return (
     <>
-      <aside className="main-sidebar  sidebar-light-primary elevation-4">
+      <aside className="main-sidebar sidebar-light-primary elevation-4">
         {/* Brand Logo */}
         <div className="d-flex justify-content-center">
           <img

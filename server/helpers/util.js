@@ -33,24 +33,46 @@ function generateSuratJalanNumber(uniqueId) {
   return `${uniqueId}/SJ/CV/${romanMonth}/${year}`;
 }
 
-
 function generateInvoiceNumberPPN(uniqueId) {
   // Get the current date
   const now = new Date();
 
-  // Extract the current year and month
+  // Extract the current year
   const year = now.getFullYear();
-  const month = now.getMonth() + 1; // getMonth() returns 0-11, so we add 1
+
+  // Calculate the base year (24000 for 2024, 25000 for 2025, etc.)
+  const baseYear = Math.floor(year) - 2000; // Will give 24 for 2024, 25 for 2025, etc.
+  const invoiceBase = `${baseYear}000`; // Convert to string and append '000'
+
+  // Get the uniqueId directly from the parameter
+  const uniqueNumber = uniqueId; // This will be the unique identifier passed as a parameter
+
+  // Format the unique ID according to the specified rules
+  let formattedUniqueId;
+  if (uniqueNumber < 10) {
+    formattedUniqueId = String(uniqueNumber).padStart(4, '0'); // 00000
+  } else if (uniqueNumber < 100) {
+    formattedUniqueId = String(uniqueNumber).padStart(3, '0'); // 0000
+  } else if (uniqueNumber < 1000) {
+    formattedUniqueId = String(uniqueNumber).padStart(2, '0'); // 000
+  } else if (uniqueNumber < 10000) {
+    formattedUniqueId = String(uniqueNumber).padStart(1, '0'); // 00
+  } else {
+    formattedUniqueId = String(uniqueNumber); // No padding for five or more digits
+  }
 
   // Map the month number to Roman numerals
+  const month = now.getMonth() + 1; // getMonth() returns 0-11, so we add 1
   const romanMonths = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 
   // Get the Roman numeral for the current month
   const romanMonth = romanMonths[month - 1]; // Subtract 1 to match the array index
 
   // Create the final string
-  return `${uniqueId}/CV/SMD/${romanMonth}/${year}`;
+  return `${invoiceBase}${formattedUniqueId}/CV/SMD/${romanMonth}/${year}`;
 }
+
+
 
 function generateInvoiceNumberNoPPN(uniqueId) {
   // Get the current date

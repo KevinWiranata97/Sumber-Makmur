@@ -35,7 +35,13 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
     // Add more columns as needed
   ];
 
+  // State to track the current active tab
+  const [activeTab, setActiveTab] = useState('form'); // 'form' for form view, 'blank' for the blank view
 
+  // Function to toggle tab
+  const handleTabClick = (tab) => {
+    setActiveTab(tab);
+  };
   const [formData, setFormData] = useState({
     name: "",
     part_number: "",
@@ -160,19 +166,54 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
       console.log(error);
     }
   }
+  const closeModal = () => {
+    setActiveTab('form');  // Reset the active tab
+    handleClose();         // Call the original close handler
+  };
+  
   return (
-    <Modal show={showModal} onHide={handleClose} size="xl">
-      <Modal.Header>
-        <Modal.Title>{data ? 'Edit Barang' : 'Tambah Barang'}</Modal.Title>
+    <Modal show={showModal} onHide={closeModal} size="xl">
+    <Modal.Header>
+      <div className="modal-tabs">
+        {/* First Tab */}
+        <span
+          className={`tab-title ${activeTab === 'form' ? 'active-tab' : ''}`}
+          onClick={() => handleTabClick('form')}
+        >
+          {data ? 'Edit Barang' : 'Tambah Barang'}
+        </span>
+
+        {/* Second Tab, only visible if data exists */}
+        {data && (
+          <span
+            className={`tab-title ${activeTab === 'history-pembelian' ? 'active-tab' : ''}`}
+            onClick={() => handleTabClick('history-pembelian')}
+          >
+            History Pembelian Barang
+          </span>
+        )}
+
+        {/* Third Tab for Penjualan Barang, also visible only if data exists */}
+        {data && (
+          <span
+            className={`tab-title ${activeTab === 'history-penjualan' ? 'active-tab' : ''}`}
+            onClick={() => handleTabClick('history-penjualan')}
+          >
+            History Penjualan Barang
+          </span>
+        )}
+      </div>
+      {data && (
         <button className="btn btn-link" onClick={handleDelete}>
-          {data ? <i className="fas fa-trash" style={{ color: 'red' }}> </i> : <></>}
+          <i className="fas fa-trash" style={{ color: 'red' }}> </i>
         </button>
-      </Modal.Header>
-      <Modal.Body>
+      )}
+    </Modal.Header>
+    <Modal.Body>
+      {activeTab === 'form' ? (
         <Form onSubmit={handleSubmit}>
           <div className="row">
             {columns.map((column) => (
-
               <div className="col-6 mb-2" key={column.field}>
                 <Form.Group controlId={column.field}>
                   <Form.Label>{column.headerName}</Form.Label>
@@ -184,22 +225,17 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                       onChange={handleChange}
                       required
                     >
-                      {/* Generate dropdown options */}
                       <option value="">{`Pilih ${column.headerName}`}</option>
-                      {column.field === 'storage_id' ? (
-                        storages.map((storage) => (
-                          <option key={storage.id} value={storage.id} selected={formData.storage_id === storage.id}>
-                            {storage.storage_name}
-                          </option>
-                        ))
-                      ) : null}
-                      {column.field === 'unit_id' ? (
-                        units.map((unit) => (
-                          <option key={unit.id} value={unit.id} selected={formData.unit_id === unit.id}>
-                            {unit.unit_code}
-                          </option>
-                        ))
-                      ) : null}
+                      {column.field === 'storage_id' && storages.map((storage) => (
+                        <option key={storage.id} value={storage.id} selected={formData.storage_id === storage.id}>
+                          {storage.storage_name}
+                        </option>
+                      ))}
+                      {column.field === 'unit_id' && units.map((unit) => (
+                        <option key={unit.id} value={unit.id} selected={formData.unit_id === unit.id}>
+                          {unit.unit_code}
+                        </option>
+                      ))}
                     </Form.Control>
                   ) : (
                     <Form.Control
@@ -223,8 +259,23 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
             </Button>
           </div>
         </Form>
-      </Modal.Body>
-    </Modal>
+      ) : activeTab === 'history-pembelian' ? (
+        <div className="text-center">
+          <h5>History Pembelian Barang</h5>
+          {/* Add content for History Pembelian here */}
+        </div>
+      ) : activeTab === 'history-penjualan' ? (
+        <div className="text-center">
+          <h5>History Penjualan Barang</h5>
+          {/* Add content for History Penjualan here */}
+        </div>
+      ) : (
+        <div className="text-center">
+          <h5>{data ? 'Editing Blank Modal' : 'Adding Blank Modal'}</h5>
+        </div>
+      )}
+    </Modal.Body>
+  </Modal>
   );
 };
 const Home = () => {

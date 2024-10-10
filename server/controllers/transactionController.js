@@ -257,7 +257,7 @@ class Controller {
         } else if (transaction_type === 'sell') {
           // For 'sell' transactions, auto-generate the invoice number based on PPN
           if (PPN) {
-            finalInvoiceNumber = generateInvoiceNumberPPN(tax_number); // Use PPN invoice generation
+            finalInvoiceNumber = generateInvoiceNumberPPN(transactionLatest ? transactionLatest.id : 1); // Use PPN invoice generation
           } else {
             finalInvoiceNumber = generateInvoiceNumberNoPPN(transactionLatest ? transactionLatest.id : 1); // Use non-PPN invoice generation
           }

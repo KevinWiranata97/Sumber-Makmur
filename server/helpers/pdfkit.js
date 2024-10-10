@@ -137,7 +137,7 @@ const fs = require('fs');
 
 function generateInvoice(invoiceData, filePath) {
   const doc = new PDFDocument({
-    size: [396, 684], // Set the custom size
+    size: 'legal', // Set the custom size
     layout: 'landscape', // Landscape layout for a wider format
     margins: { top: 20, bottom: 20, left: 20, right: 20 } // Adjust margins for the page
   });
@@ -147,19 +147,19 @@ function generateInvoice(invoiceData, filePath) {
 
   // Header with company information
   doc
-    .fontSize(12)
+    .fontSize(16)
     .font('Helvetica-Bold')
     .text(`${invoiceData.companyName || 'CV. SUMBER MAKMUR DIESEL'}`, { align: 'center' })
     .moveDown(0.3);
 
   doc
-    .fontSize(10)
+    .fontSize(14)
     .font('Helvetica-Bold')
     .text('GENERAL SPAREPART & TECHNICAL SUPPLIER', { align: 'center' })
     .moveDown(0.3);
 
   doc
-    .fontSize(8)
+    .fontSize(14)
     .font('Helvetica')
     .text(`${invoiceData.companyAddress || 'Jl. Krekot Raya, Ruko Komplek Krekot Bunder IV No. 34A'}`, { align: 'center' })
     .text(`${invoiceData.cityPostalCode || 'Jakarta Pusat - 10710'}`, { align: 'center' })
@@ -168,18 +168,18 @@ function generateInvoice(invoiceData, filePath) {
 
   // Invoice details (left side)
   doc
-    .fontSize(8)
-    .text(`Tgl. Transaksi : ${invoiceData.transaction_date || '-'}`, 30, 80)
-    .text(`Tgl. Tempo : ${invoiceData.transaction_due_date || '-'}`, 30, 95)
-    .text(`Inv No  : ${invoiceData.invoiceNumber}`, 30, 110)
-    .text(`SJ No   : ${invoiceData.sjNumber || '-'}`, 30, 125)
-    .text(`Items   : ${invoiceData.items.length} Items`, 30, 140)
-    .text(`PO No   : ${invoiceData.poNumber || 'BY. PHONE'}`, 30, 155);
+    .fontSize(16)
+    .text(`Tgl. Transaksi : ${invoiceData.transaction_date || '-'}`, 10, 120)
+    .text(`Tgl. Tempo : ${invoiceData.transaction_due_date || '-'}`, 10, 135)
+    .text(`Inv No  : ${invoiceData.invoiceNumber}`, 10, 150)
+    .text(`SJ No   : ${invoiceData.sjNumber || '-'}`, 10, 165)
+    .text(`Items   : ${invoiceData.items.length} Items`, 10, 180)
+    .text(`PO No   : ${invoiceData.poNumber || 'BY. PHONE'}`, 10, 195);
 
   // Date and recipient info (right side)
   doc
-    .fontSize(8)
-    .text(`Jakarta, ${invoiceData.transaction_date}`, 300, 80, { align: 'right' })
+    .fontSize(16)
+    .text(`Jakarta, ${invoiceData.transaction_date}`, 300, 120, { align: 'right' })
     .moveDown(0.5)
     .text('Kepada Yth,', { align: 'right' })
     .text(`${invoiceData.customer.name}`, { align: 'right' })
@@ -187,30 +187,30 @@ function generateInvoice(invoiceData, filePath) {
     .moveDown(1);
 
   // Table Headers
-  const tableTop = 170;
+  const tableTop = 220;
   doc
-    .fontSize(8)
-    .text('NO.', 30, tableTop)
-    .text('QTY', 60, tableTop)
-    .text('PART NUMBER', 150, tableTop)
-    .text('DESCRIPTION', 300, tableTop)
-    .text('UNIT PRICE', 450, tableTop)
-    .text('AMOUNT', 550, tableTop);
+    .fontSize(16)
+    .text('NO.', 10, tableTop)
+    .text('QTY', 100, tableTop)
+    .text('PART NUMBER', 250, tableTop)
+    .text('DESCRIPTION', 400, tableTop)
+    .text('UNIT PRICE', 650, tableTop)
+    .text('AMOUNT', 850, tableTop);
 
   // Draw a line under the headers
-  doc.moveTo(30, tableTop + 15).lineTo(650, tableTop + 15).stroke();
+  doc.moveTo(10, tableTop + 15).lineTo(998, tableTop + 15).stroke();
 
   // List the items
   let position = tableTop + 25;
   invoiceData.items.forEach((item, index) => {
     doc
-      .fontSize(8)
-      .text(index + 1, 30, position)
-      .text(item.quantity + ' ' + item.unit_code, 60, position)
-      .text(item.partNumber || '', 150, position)
-      .text(item.itemName || '', 300, position)
-      .text(`Rp.` + item.unitCost.toLocaleString(), 450, position)
-      .text(`Rp.` + item.total.toLocaleString(), 550, position);
+      .fontSize(16)
+      .text(index + 1, 10, position)
+      .text(item.quantity + ' ' + item.unit_code, 100, position)
+      .text(item.partNumber || '', 250, position)
+      .text(item.itemName || '', 400, position)
+      .text(`Rp.` + item.unitCost.toLocaleString(), 750, position)
+      .text(`Rp.` + item.total.toLocaleString(), 850  , position);
     position += 15;
   });
 
@@ -218,41 +218,41 @@ function generateInvoice(invoiceData, filePath) {
   const summaryTop = position + 10;
 
   // Draw a line before the "TERBILANG" and "SUB TOTAL" sections
-  doc.moveTo(30, summaryTop - 10).lineTo(650, summaryTop - 10).stroke();
+  doc.moveTo(10, summaryTop - 10).lineTo(998, summaryTop - 10).stroke();
 
   // Render TERBILANG and Summary
   doc
-    .fontSize(8)
+    .fontSize(16)
     .text(`TERBILANG: # ${invoiceData.terbilang} Rupiah #`, 30, summaryTop)
-    .text('SUB TOTAL', 450, summaryTop,)
-    .text(`Rp.` + invoiceData.subTotal.toLocaleString(), 550, summaryTop)
+    .text('SUB TOTAL', 700, summaryTop,)
+    .text(`Rp.` + invoiceData.subTotal.toLocaleString(), 900, summaryTop)
     .moveDown(0.3)
-    .text('DISCOUNT', 450, summaryTop + 10,)
-    .text(`Rp.` + invoiceData.discount.toLocaleString(), 550, summaryTop + 10)
-    .text('TOTAL', 450, summaryTop + 20, )
-    .text(`Rp.` + invoiceData.total.toLocaleString(), 550, summaryTop + 20)
-    .text('TOTAL PPN', 450, summaryTop + 30,)
-    .text(`Rp.` + invoiceData.totalPpn.toLocaleString(), 550, summaryTop + 30)
+    .text('DISCOUNT', 700, summaryTop + 20,)
+    .text(`Rp.` + invoiceData.discount.toLocaleString(), 900, summaryTop + 20)
+    .text('TOTAL', 700, summaryTop + 40, )
+    .text(`Rp.` + invoiceData.total.toLocaleString(), 900, summaryTop + 40)
+    .text('TOTAL PPN', 700, summaryTop + 60,)
+    .text(`Rp.` + invoiceData.totalPpn.toLocaleString(), 900, summaryTop + 60)
     .font('Helvetica-Bold')
-    .text('GRAND TTL', 450, summaryTop + 40,)
-    .text(`Rp.` + invoiceData.grandTotal.toLocaleString(), 550, summaryTop + 40);
+    .text('GRAND TTL', 700, summaryTop + 80,)
+    .text(`Rp.` + invoiceData.grandTotal.toLocaleString(), 900, summaryTop + 80);
 
   // Tanda Terima and Payment Information
-  const bottomPosition = summaryTop + 65;
+  const bottomPosition = summaryTop + 200;
   doc
-    .fontSize(8)
-    .text('Tanda Terima,', 30, bottomPosition)
-    .text('PEMBAYARAN:', 200, bottomPosition)
-    .text('Hormat kami,', 550, bottomPosition)
-    .text(`A/N: ${invoiceData.bank.accountName}`, 200, bottomPosition + 15)
-    .text(`AC: ${invoiceData.bank.accountNumber}`, 200, bottomPosition + 30)
-    .text(`BANK: ${invoiceData.bank.bankName}, ${invoiceData.bank.bankBranch}`, 200, bottomPosition + 45)
-    .text(invoiceData.signature || 'ANTHONI LIE', 550, bottomPosition + 45);
+    .fontSize(16)
+    .text('Tanda Terima,', 20, bottomPosition)
+    .text('PEMBAYARAN:', 400, bottomPosition)
+    .text('Hormat kami,', 900, bottomPosition)
+    .text(`A/N: ${invoiceData.bank.accountName}`, 400, bottomPosition + 15)
+    .text(`AC: ${invoiceData.bank.accountNumber}`, 400, bottomPosition + 30)
+    .text(`BANK: ${invoiceData.bank.bankName}, ${invoiceData.bank.bankBranch}`, 400, bottomPosition + 45)
+    .text(invoiceData.signature || 'ANTHONI LIE', 900, bottomPosition + 45);
 
   // Signature Section for Tanda Terima
   doc
-    .fontSize(8)
-    .text('__________________', 30, bottomPosition + 60)
+    .fontSize(16)
+    .text('__________________', 20, bottomPosition + 40)
     .moveDown();
 
   // Finalize the PDF
@@ -313,10 +313,10 @@ function generateInvoiceNonPPN(invoiceData, filePath) {
     .fontSize(10)
     .text('NO.', 50, tableTop)
     .text('QTY', 100, tableTop)
-    .text('PART NUMBER', 150, tableTop)
-    .text('DESCRIPTION', 250, tableTop)
-    .text('UNIT PRICE', 500, tableTop)
-    .text('AMOUNT', 670, tableTop)
+    .text('PART NUMBER', 250, tableTop)
+    .text('DESCRIPTION', 450, tableTop)
+    .text('UNIT PRICE', 600, tableTop)
+    .text('AMOUNT', 850, tableTop)
     .moveDown();
 
   // Draw a line under the headers
@@ -329,10 +329,10 @@ function generateInvoiceNonPPN(invoiceData, filePath) {
       .fontSize(10)
       .text(index + 1, 50, position)
       .text(item.quantity + ' ' + item.unit_code, 100, position)
-      .text(item.partNumber || '', 150, position)
-      .text(item.itemName || '', 250, position)
-      .text(`Rp.` + item.unitCost.toLocaleString(), 500, position)
-      .text(`Rp.` + item.total.toLocaleString(), 660, position)
+      .text(item.partNumber || '', 250, position)
+      .text(item.itemName || '', 450, position)
+      .text(`Rp.` + item.unitCost.toLocaleString(), 600, position)
+      .text(`Rp.` + item.total.toLocaleString(), 850, position)
     position += 20;
   });
 
@@ -346,17 +346,17 @@ function generateInvoiceNonPPN(invoiceData, filePath) {
   doc
     .fontSize(10)
     .text(`TERBILANG: # ${invoiceData.terbilang} Rupiah #`, 50, summaryTop, { align: 'left' })
-    .text('SUB TOTAL', 470, summaryTop, { width: 90, align: 'right' })
+    .text('SUB TOTAL', 350, summaryTop, { width: 90, align: 'right' })
     .text(`Rp.` + invoiceData.subTotal.toLocaleString(), 450, summaryTop, { align: 'right' })
     .moveDown(0.5)
-    .text('DISCOUNT', 470, summaryTop + 15, { width: 90, align: 'right' })
+    .text('DISCOUNT', 350, summaryTop + 15, { width: 90, align: 'right' })
     .text(`Rp.` + invoiceData.discount.toLocaleString(), 450, summaryTop + 15, { align: 'right' })
-    .text('TOTAL', 470, summaryTop + 30, { width: 90, align: 'right' })
+    .text('TOTAL', 350, summaryTop + 30, { width: 90, align: 'right' })
     .text(`Rp.` + invoiceData.total.toLocaleString(), 450, summaryTop + 30, { align: 'right' })
-    .text('TOTAL PPN', 470, summaryTop + 45, { width: 90, align: 'right' })
+    .text('TOTAL PPN', 350, summaryTop + 45, { width: 90, align: 'right' })
     .text(`Rp.` + invoiceData.totalPpn.toLocaleString(), 450, summaryTop + 45, { align: 'right' })
     .font('Helvetica-Bold')
-    .text('GRAND TTL', 470, summaryTop + 60, { width: 90, align: 'right' })
+    .text('GRAND TTL', 350, summaryTop + 60, { width: 90, align: 'right' })
     .text(`Rp.` + invoiceData.grandTotal.toLocaleString(), 450, summaryTop + 60, { align: 'right' });
 
   // Tanda Terima and Payment Information

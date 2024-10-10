@@ -1189,7 +1189,7 @@ const TransactionSell = () => {
     }
   }
   const columns = [
-    { field: "transaction_invoice_number", headerName: "No. Invoice", flex: 1 },
+    { field: "transaction_invoice_number", headerName: "No. Invoice", flex: 2 },
     { field: "transaction_surat_jalan", headerName: "No. Surat Jalan", flex: 1 },
     { field: "transaction_PO_num", headerName: "No. PO", flex: 1 },
     { field: "transaction_date", headerName: "Tanggal Pembelian", flex: 1 },

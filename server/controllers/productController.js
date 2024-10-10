@@ -1,4 +1,4 @@
-const { Product, Storage, Unit } = require("../models");
+const { Product, Storage, Unit, Transaction_Product, Transaction,Supplier,Customer } = require("../models");
 const { Op } = require('sequelize'); // Import Sequelize operators
 class Controller {
 
@@ -279,6 +279,60 @@ class Controller {
       });
     } catch (error) {
       next(error);
+    }
+  }
+
+  static async getProductSellHistory(req,res,next){
+    try {
+      const { id } = req.params;
+      const productById = await Product.findOne({
+        where: {
+          id,
+          status: true,
+        },
+      });
+      if (!productById) {
+        throw {
+          name: "not_found",
+          code: 404,
+          msg: "Product not found",
+        };
+      }
+
+    const getTransactionProduct = await Transaction_Product.findAll({
+      where:{
+        product_id:id,
+        status:true
+      },
+      attributes:{
+        exclude:['createdAt','updatedAt']
+      },
+      include: [
+        {
+          model: Transaction,
+          where:{
+            transaction_type:"sell",
+            status:true
+          
+          },
+          attributes:['transaction_invoice_number','transaction_date'],
+          include:[
+           {
+            model: Customer,
+            attributes:['customer_name']
+           }
+          ]
+        }
+      ],
+    })
+
+    res.status(200).json({
+      error: false,
+      msg: `success`,
+      data: getTransactionProduct,
+    });
+    } catch (error) {
+      next(error)
     }
   }
 }

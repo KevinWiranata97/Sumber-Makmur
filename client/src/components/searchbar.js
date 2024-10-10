@@ -8,16 +8,11 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 const SearchBar = ({ onAdd, fetchProducts }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
-
-  
-
-  // Handle the clearing of the input field
   const handleClear = () => {
     setSearchTerm('');
     fetchProducts(''); // Fetch all products when search is cleared
   };
 
-  // Debounce function to reduce API calls while typing
   const debounce = (func, delay) => {
     let timeoutId;
     return (...args) => {
