@@ -166,7 +166,28 @@ function formatDateToDDMMYYYY(dateInput) {
     return `${year}-${month}-${day}`; // Return in YYYY-MM-DD format
   }
   
- 
+  function convertDateToIndonesianFormat(datetimeStr) {
+    // Parse the datetime string into a JavaScript Date object
+    const date = new Date(datetimeStr);
+  
+    // Extract day, month, and year
+    const day = date.getDate();
+    const year = date.getFullYear();
+  
+    // Array of month names in Indonesian
+    const months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+  
+    // Get the month name
+    const month = months[date.getMonth()];
+  
+    // Return formatted date
+    return `${day} ${month} ${year}`;
+  }
+  
+
 module.exports = {
     generateCustomString,
     generateRandom6DigitNumber,
@@ -175,5 +196,6 @@ module.exports = {
     convertToTerbilang,
     formatDateToYYYYMMDD,
     generateInvoiceNumberNoPPN,
-    generateInvoiceNumberPPN
+    generateInvoiceNumberPPN,
+    convertDateToIndonesianFormat
 }

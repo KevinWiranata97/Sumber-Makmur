@@ -332,16 +332,19 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
         },
       });
 
-      // Extract the fileUrl from the API response
-      const fileUrl = response.data.data.fileUrl;
+      if(response){
+        const fileUrl = response.data.data.fileUrl;
 
-      // Create a hidden <a> element and trigger the download
-      const link = document.createElement('a');
-      link.href = fileUrl;
-      link.download = isSuratJalanChecked ? 'surat_jalan.pdf' : 'invoice.pdf'; // Change file name based on the checkbox
-      document.body.appendChild(link); // Append the link to the body
-      link.click(); // Programmatically trigger the click
-      document.body.removeChild(link); // Clean up by removing the link
+        // Create a hidden <a> element and trigger the download
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = isSuratJalanChecked ? 'surat_jalan.xlsx' : 'invoice.xlsx'; // Change file name based on the checkbox
+        document.body.appendChild(link); // Append the link to the body
+        link.click(); // Programmatically trigger the click
+        document.body.removeChild(link); // Clean up by removing the link
+      }
+      // Extract the fileUrl from the API response
+   
     } catch (error) {
       console.error('Error downloading the document:', error);
       // Handle error (e.g., show a message to the user)
@@ -650,15 +653,17 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
           >
             <i className="fas fa-plus" style={{ color: 'green', fontSize: '24px' }}></i>
           </button>
-          <button
-            className="btn btn-link"
-            onClick={handleDownload} // Add row when clicked
-            data-bs-toggle="tooltip"
-            data-bs-placement="top"
-            title="Print Invoice"
-          >
-            <i className="fas fa-print" style={{ color: '#6c757d', fontSize: '24px' }}></i> {/* Gray */}
-          </button>
+          {data && (
+  <button
+    className="btn btn-link"
+    onClick={handleDownload} // Add row when clicked
+    data-bs-toggle="tooltip"
+    data-bs-placement="top"
+    title="Print Invoice"
+  >
+    <i className="fas fa-print" style={{ color: '#6c757d', fontSize: '24px' }}></i> {/* Gray */}
+  </button>
+)}
 
           <button
             className="btn btn-link"

@@ -7,8 +7,7 @@ class Controller {
       const searchQuery = req.query.search || ''; // Default search is an empty string
       const limit = parseInt(req.query.limit) || 10; // Default limit is 10
       let page = parseInt(req.query.page);
-  
-      console.log(searchQuery);
+
       
       // Ensure page is at least 1, handle cases where page=0 or NaN
       page = !isNaN(page) && page > 0 ? page : 1;

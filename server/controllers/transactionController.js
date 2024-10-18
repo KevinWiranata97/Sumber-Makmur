@@ -1,5 +1,6 @@
+const { generateInvoiceExcel } = require("../helpers/excel");
 const { generateInvoice, generateInvoiceNonPPN,generateSuratJalan, generateInvoiceBuy, } = require("../helpers/pdfkit");
-const { generateRandom6DigitNumber, generateCustomString,generateSuratJalanNumber,  formatDateToDDMMYYYY, convertToTerbilang, formatDateToYYYYMMDD, generateInvoiceNumberPPN, generateInvoiceNumberNoPPN } = require("../helpers/util");
+const { generateRandom6DigitNumber, generateCustomString,generateSuratJalanNumber,  formatDateToDDMMYYYY, convertToTerbilang, formatDateToYYYYMMDD, generateInvoiceNumberPPN, generateInvoiceNumberNoPPN, convertDateToIndonesianFormat } = require("../helpers/util");
 const {
   Transaction,
   Transaction_Product,
@@ -851,8 +852,9 @@ class Controller {
         transaction_due_date: fix_transaction_due_date
       };
       const invoiceData = {
-        transaction_date: formatDateToDDMMYYYY(transactions.transaction_date),
+        transaction_date: convertDateToIndonesianFormat(transactions.transaction_date),
         transaction_due_date: formatDateToDDMMYYYY(transactions.transaction_due_date),
+
         invoiceNumber: transactions.transaction_invoice_number,
         sjNumber: transactions.transaction_surat_jalan,
         poNumber: transactions.transaction_PO_num,
@@ -866,6 +868,7 @@ class Controller {
         })),
         subTotal: transactionWithTotalAmount.total_dpp,
         discount: transactionWithTotalAmount.discount,
+        discountPercentage:customer_discount,
         totalPpn: transactionWithTotalAmount.total_ppn,
         total: transactionWithTotalAmount.total_discount,
         grandTotal: transactionWithTotalAmount.total_netto,
@@ -890,12 +893,19 @@ class Controller {
           address: transactions.transaction_type === "sell"
             ? transactions.Customer.customer_address_1
             : transactions.Supplier.supplier_address,
-        },
 
+            address_2: transactions.transaction_type === "sell"
+            ? transactions.Customer.customer_address_2
+            : transactions.Supplier.supplier_address,
+
+        },
+    
         signature: companyProfile.person_1,
+        tax_ppn: companyProfile.tax_information.tax_ppn
       };
 
 
+      
       
      
       const firstNumberPart = invoiceData.invoiceNumber.match(/^\d+/)[0];
@@ -909,15 +919,16 @@ class Controller {
       }
 
       // Create the file in the /data/invoice folder inside server
-      const filePath = path.join(invoiceDir, `${invoiceName + '.pdf'}`);
+      const filePath = path.join(invoiceDir, `${invoiceName + '.xlsx'}`);
 
 
+   
+      
 
-
-      transactions.PPN === false ? generateInvoiceNonPPN(invoiceData, filePath) : generateInvoice(invoiceData, filePath); // Assuming you have a function to generate PDF
+generateInvoiceExcel(invoiceData, filePath); // Assuming you have a function to generate PDF
 
       // Respond with the file URL (assuming the file is served via some static route)
-      const fileUrl = `${req.protocol}://${req.get('host')}/download-invoice/${invoiceName + '.pdf'}`;
+      const fileUrl = `${req.protocol}://${req.get('host')}/download-invoice/${invoiceName + '.xlsx'}`;
 
       res.status(201).json({
         error: false,

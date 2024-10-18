@@ -617,6 +617,6 @@ function generateInvoiceBuy(invoiceData, filePath) {
 }
 
 
-module.exports = { generateInvoice, generateInvoiceNonPPN,generateSuratJalan,generateInvoiceBuy }
+// module.exports = { generateInvoice, generateInvoiceNonPPN,generateSuratJalan,generateInvoiceBuy }
 
 // Example invoice data (based on the provided structure)
