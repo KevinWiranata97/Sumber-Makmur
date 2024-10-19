@@ -39,6 +39,8 @@ app.get('/download-invoice/:filename', (req, res) => {
   // Construct the file path in the server/data/invoice directory
   const filePath = path.join(__dirname, 'data', 'invoice', filename);
 
+  
+  
   // Ensure the file exists
   if (fs.existsSync(filePath)) {
     // Set headers for file download

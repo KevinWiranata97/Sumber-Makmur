@@ -1,4 +1,4 @@
-const { generateInvoiceExcel } = require("../helpers/excel");
+const { generateInvoiceExcel, generateInvoiceExcelNonPpn, generateSuratJalanExcel } = require("../helpers/excel");
 const { generateInvoice, generateInvoiceNonPPN,generateSuratJalan, generateInvoiceBuy, } = require("../helpers/pdfkit");
 const { generateRandom6DigitNumber, generateCustomString,generateSuratJalanNumber,  formatDateToDDMMYYYY, convertToTerbilang, formatDateToYYYYMMDD, generateInvoiceNumberPPN, generateInvoiceNumberNoPPN, convertDateToIndonesianFormat } = require("../helpers/util");
 const {
@@ -899,7 +899,7 @@ class Controller {
             : transactions.Supplier.supplier_address,
 
         },
-    
+        payment: transactions.Customer.customer_time,
         signature: companyProfile.person_1,
         tax_ppn: companyProfile.tax_information.tax_ppn
       };
@@ -924,8 +924,7 @@ class Controller {
 
    
       
-
-generateInvoiceExcel(invoiceData, filePath); // Assuming you have a function to generate PDF
+      transactions.PPN === false ? generateInvoiceExcelNonPpn(invoiceData, filePath) : generateInvoiceExcel(invoiceData, filePath); // Assuming you have a function to generate PDF
 
       // Respond with the file URL (assuming the file is served via some static route)
       const fileUrl = `${req.protocol}://${req.get('host')}/download-invoice/${invoiceName + '.xlsx'}`;
@@ -1079,6 +1078,7 @@ generateInvoiceExcel(invoiceData, filePath); // Assuming you have a function to 
         sjNumber: transactions.transaction_surat_jalan,
         poNumber: transactions.transaction_PO_num,
         items: transactions.Transaction_Products.map(product => ({
+          name:`${product.Product.name}`,
           quantity: product.qty,
           partNumber: product.Product.part_number,
           itemName: `${product.Product.product} ${product.Product.replacement_code}`,
@@ -1113,6 +1113,11 @@ generateInvoiceExcel(invoiceData, filePath); // Assuming you have a function to 
           address: transactions.transaction_type === "sell"
             ? transactions.Customer.customer_address_1
             : transactions.Supplier.supplier_address,
+
+            address_2: transactions.transaction_type === "sell"
+            ? transactions.Customer.customer_address_2
+            : transactions.Supplier.supplier_address,
+
         },
 
         signature: companyProfile.person_1,
@@ -1133,16 +1138,15 @@ generateInvoiceExcel(invoiceData, filePath); // Assuming you have a function to 
       }
 
       // Create the file in the /data/invoice folder inside server
-      const filePath = path.join(invoiceDir, `${invoiceName + '.pdf'}`);
+      const filePath = path.join(invoiceDir, `${invoiceName + '.xlsx'}`);
 
 
-   
-      
+  
 
-      generateSuratJalan(invoiceData, filePath)
+      generateSuratJalanExcel(invoiceData, filePath)
 
       // Respond with the file URL (assuming the file is served via some static route)
-      const fileUrl = `${req.protocol}://${req.get('host')}/download-invoice/${invoiceName + '.pdf'}`;
+      const fileUrl = `${req.protocol}://${req.get('host')}/download-invoice/${invoiceName + '.xlsx'}`;
 
       res.status(201).json({
         error: false,
