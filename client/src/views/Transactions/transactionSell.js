@@ -323,7 +323,8 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
       const apiUrl = isSuratJalanChecked
         ? `${process.env.REACT_APP_API_URL}/transactions/generate-surat-jalan/${transaction_id}`
         : `${process.env.REACT_APP_API_URL}/transactions/generate-invoice/${transaction_id}`;
-
+  
+      // Send the request to generate the file
       const response = await axios({
         method: "GET",
         url: apiUrl,
@@ -331,25 +332,53 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
           authorization: localStorage.getItem("authorization"),
         },
       });
-
-      if(response){
+  
+      if (response) {
         const fileUrl = response.data.data.fileUrl;
-
-        // Create a hidden <a> element and trigger the download
-        const link = document.createElement('a');
+  
+        // Polling to check if the file is ready for download
+        const maxRetries = 5; // Maximum number of retry attempts
+        const retryDelay = 3000; // Delay between retries in milliseconds (3 seconds)
+        let attempt = 0;
+        let fileExists = false;
+  
+        while (attempt < maxRetries) {
+          try {
+            // Check if the file exists by making a HEAD request
+            const headResponse = await axios.head(fileUrl);
+            if (headResponse.status === 200) {
+              fileExists = true;
+              break; // Exit the loop if the file is found
+            }
+          } catch (error) {
+            console.warn(`File not ready yet. Retrying in ${retryDelay / 1000} seconds...`);
+          }
+  
+          // Wait for a few seconds before the next attempt
+          await new Promise((resolve) => setTimeout(resolve, retryDelay));
+          attempt++;
+        }
+  
+        if (!fileExists) {
+          console.error("File generation timed out.");
+          return;
+        }
+  
+        // Proceed with the download if the file is ready
+        const link = document.createElement("a");
         link.href = fileUrl;
-        link.download = isSuratJalanChecked ? 'surat_jalan.xlsx' : 'invoice.xlsx'; // Change file name based on the checkbox
+        link.download = isSuratJalanChecked ? "surat_jalan.xlsx" : "invoice.xlsx"; // Change file name based on the checkbox
         document.body.appendChild(link); // Append the link to the body
         link.click(); // Programmatically trigger the click
         document.body.removeChild(link); // Clean up by removing the link
       }
-      // Extract the fileUrl from the API response
-   
+  
     } catch (error) {
-      console.error('Error downloading the document:', error);
+      console.error("Error downloading the document:", error);
       // Handle error (e.g., show a message to the user)
     }
   };
+  
   async function deleteProduct(id) {
 
 

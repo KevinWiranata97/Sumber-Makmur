@@ -1,4 +1,4 @@
-const { generateInvoiceExcel, generateInvoiceExcelNonPpn, generateSuratJalanExcel } = require("../helpers/excel");
+const { generateInvoiceExcel, generateInvoiceExcelNonPpn, generateSuratJalanExcel, generateInvoiceExcelBuy } = require("../helpers/excel");
 const { generateInvoice, generateInvoiceNonPPN,generateSuratJalan, generateInvoiceBuy, } = require("../helpers/pdfkit");
 const { generateRandom6DigitNumber, generateCustomString,generateSuratJalanNumber,  formatDateToDDMMYYYY, convertToTerbilang, formatDateToYYYYMMDD, generateInvoiceNumberPPN, generateInvoiceNumberNoPPN, convertDateToIndonesianFormat } = require("../helpers/util");
 const {
@@ -924,7 +924,7 @@ class Controller {
 
    
       
-      transactions.PPN === false ? generateInvoiceExcelNonPpn(invoiceData, filePath) : generateInvoiceExcel(invoiceData, filePath); // Assuming you have a function to generate PDF
+      transactions.PPN === false ? await generateInvoiceExcelNonPpn(invoiceData, filePath) : await generateInvoiceExcel(invoiceData, filePath); // Assuming you have a function to generate PDF
 
       // Respond with the file URL (assuming the file is served via some static route)
       const fileUrl = `${req.protocol}://${req.get('host')}/download-invoice/${invoiceName + '.xlsx'}`;
@@ -1143,7 +1143,7 @@ class Controller {
 
   
 
-      generateSuratJalanExcel(invoiceData, filePath)
+      await generateSuratJalanExcel(invoiceData, filePath)
 
       // Respond with the file URL (assuming the file is served via some static route)
       const fileUrl = `${req.protocol}://${req.get('host')}/download-invoice/${invoiceName + '.xlsx'}`;
@@ -1352,14 +1352,14 @@ class Controller {
       }
 
       // Create the file in the /data/invoice folder inside server
-      const filePath = path.join(invoiceDir, `${invoiceName + '.pdf'}`);
+      const filePath = path.join(invoiceDir, `${invoiceName + '.xlsx'}`);
 
 
-      generateInvoiceBuy(invoiceData, filePath)
+     await generateInvoiceExcelBuy(invoiceData, filePath)
 
 
       // Respond with the file URL (assuming the file is served via some static route)
-      const fileUrl = `${req.protocol}://${req.get('host')}/download-invoice/${invoiceName + '.pdf'}`;
+      const fileUrl = `${req.protocol}://${req.get('host')}/download-invoice/${invoiceName + '.xlsx'}`;
 
       res.status(201).json({
         error: false,
