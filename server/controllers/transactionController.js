@@ -18,10 +18,6 @@ const path = require('path');
 const { Op } = require('sequelize');
 class Controller {
 
-
-
-  // Controller function to get paginated and searchable transactions
-
   static async getTransaction(req, res, next) {
     try {
       // Extract query parameters
@@ -190,9 +186,6 @@ class Controller {
   }
 
 
-
-
-
   static async createTransaction(req, res, next) {
     let transaction;
     const {
@@ -354,7 +347,6 @@ class Controller {
     }
   }
   
-
 
   static async getTransactionById(req, res, next) {
     try {
@@ -861,7 +853,7 @@ class Controller {
         items: transactions.Transaction_Products.map(product => ({
           quantity: product.qty,
           partNumber: product.Product.part_number,
-          itemName: `${product.Product.product} ${product.Product.replacement_code}`,
+          itemName: `${product.Product.name}`,
           unitCost: product.current_cost,
           total: product.qty * product.current_cost,
           unit_code: product.Product.Unit.unit_code
@@ -902,17 +894,12 @@ class Controller {
         payment: transactions.Customer.customer_time,
         signature: companyProfile.person_1,
         tax_ppn: companyProfile.tax_information.tax_ppn
-      };
-
-
+      };      
       
-      
-     
       const firstNumberPart = invoiceData.invoiceNumber.match(/^\d+/)[0];
 
       const invoiceName = `invoice_${firstNumberPart}`
 
-      
       const invoiceDir = path.join(__dirname, '..', 'data', 'invoice');
       if (!fs.existsSync(invoiceDir)) {
         fs.mkdirSync(invoiceDir, { recursive: true }); // Create the directory if it doesn't exist
@@ -921,9 +908,6 @@ class Controller {
       // Create the file in the /data/invoice folder inside server
       const filePath = path.join(invoiceDir, `${invoiceName + '.xlsx'}`);
 
-
-   
-      
       transactions.PPN === false ? await generateInvoiceExcelNonPpn(invoiceData, filePath) : await generateInvoiceExcel(invoiceData, filePath); // Assuming you have a function to generate PDF
 
       // Respond with the file URL (assuming the file is served via some static route)

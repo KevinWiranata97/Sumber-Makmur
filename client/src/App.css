@@ -286,6 +286,7 @@ input::placeholder {
   height: 50%;
 }
 
+
 .search-select {
   width: 220px; /* Adjust the width as needed */
 }
@@ -356,4 +357,37 @@ input::placeholder {
   position: absolute;
   bottom: -2px;
   left: 0;
+}
+.modal-hidden {
+  display: none !important;
+}
+
+/* Custom styling for the modal */
+.product-modal .modal-dialog {
+  max-width: 75%; /* Ensure the modal width is large enough */
+  width: 70%; /* Allow more space for the table */
+}
+
+/* Enable horizontal scrolling in the modal body */
+.scrollable-table {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Adjust table layout */
+.table-scroll {
+  table-layout: auto; /* Allow the table to adjust width based on content */
+  width: 100%; /* Take full width of the modal */
+}
+
+.table-scroll th,
+.table-scroll td {
+  white-space: nowrap; /* Prevent wrapping inside cells */
+  text-overflow: ellipsis; /* Show ellipsis for overflowing text */
+}
+
+/* Optional: Add some padding to ensure the text inside cells is not too cramped */
+.table-scroll th,
+.table-scroll td {
+  padding: 8px;
 }
