@@ -1,69 +1,109 @@
-import React, { useState } from "react";
-import { Modal, Button, Table } from "react-bootstrap";
+import React, { useState, useEffect } from "react";
+import { Modal, Table, Pagination, Form } from "react-bootstrap";
+import axios from "axios";
+import Swal from "sweetalert2";
+const MyComponent = ({ showModal, onHide, onDataSubmit }) => {
+  const [newProducts, setNewProducts] = useState([]); // Stores product data
+  const [filteredProducts, setFilteredProducts] = useState([]); // Stores filtered data
+  const [currentPage, setCurrentPage] = useState(1); // Tracks the current page
+  const [searchQuery, setSearchQuery] = useState(""); // State for search query
+  const [totalItems, setTotalItems] = useState(0); // Total number of items from the backend
+  const rowsPerPage = 10; // Number of rows per page (backend controlled)
+  const maxPageButtons = 5; // Maximum number of visible page buttons
 
-const MyComponent = ({showModal,onHide}) => {
+  const fetchProducts = async (searchTerm = "", page = 1) => {
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_URL}/products`,
+        {
+          params: {
+            search: searchTerm,
+            page: page,
+            limit: rowsPerPage, // Send the page and limit for backend pagination
+          },
+          headers: {
+            authorization: localStorage.getItem("authorization"),
+          },
+        }
+      );
 
-    
-  const [rows, setRows] = useState([]); // Table rows
-  const [newProduct, setNewProduct] = useState({
-    id: Date.now(),
-    Product: {
-      id: "",
-      part_number: "",
-      name: "",
-      unit_code: "",
-    },
-    qty: 1,
-    current_cost: 0,
-    isNew: true,
-  });
-
-//   const handleAddRow = () => {
-//     setShowModal(true); // Open the modal
-//   };
-
-  const handleSave = () => {
-    // Add new product to rows
-    setRows([...rows, newProduct]);
-    // setShowModal(false); // Close the modal
+      setNewProducts(response.data.data); // Data returned from the server
+      setTotalItems(response.data.pagination.totalItems); // Total number of items (needed for pagination)
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setNewProduct({
-      ...newProduct,
-      Product: { ...newProduct.Product, [name]: value },
-    });
+  useEffect(() => {
+    fetchProducts(searchQuery, currentPage); // Fetch products on load
+  }, [searchQuery, currentPage]);
+
+  // Filter rows based on the search query
+  const handleSearch = (event) => {
+    const query = event.target.value;
+    setSearchQuery(query); // Update search query
+    setCurrentPage(1); // Reset to the first page when search changes
+  };
+
+  // Handle page change
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  // Total pages based on totalItems and rowsPerPage
+  const totalPages = Math.ceil(totalItems / rowsPerPage);
+
+  // Generate pagination range dynamically
+  const getPaginationItems = () => {
+    let startPage = Math.max(1, currentPage - Math.floor(maxPageButtons / 2));
+    let endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
+
+    if (endPage - startPage < maxPageButtons) {
+      startPage = Math.max(1, endPage - maxPageButtons + 1);
+    }
+
+    const pages = [];
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
+
+  const handleRowDoubleClick = (row) => {
+    onDataSubmit(row);
   };
 
   return (
     <div>
-      {/* React-Bootstrap Modal with custom styling for horizontal scroll */}
-      <Modal show={showModal} onHide={onHide} centered size="lg" className="product-modal">
+      <Modal
+        show={showModal}
+        onHide={onHide}
+        centered
+        size="lg"
+        className="product-modal"
+      >
         <Modal.Header>
-            
-    
-          <Modal.Title>Add New Product</Modal.Title>
-
+          <Modal.Title>Tambah Barang</Modal.Title>
           <div>
-            <button
-              className="btn btn-link"
-              data-bs-toggle="tooltip"
-              data-bs-placement="top"
-              title="Close"
-            >
+            <button className="btn btn-link" title="Close" onClick={onHide}>
               <i
                 className="fas fa-times"
                 style={{ color: "red", fontSize: "24px" }}
-                onClick={onHide}
               ></i>
             </button>
-    
           </div>
         </Modal.Header>
         <Modal.Body className="scrollable-table">
-          {/* Table inside Modal Body */}
-          <Table striped bordered hover className="table-scroll">
+          {/* Search Bar */}
+          <Form.Group className="mb-3">
+            <Form.Control
+              type="text"
+              placeholder="Search by any field"
+              value={searchQuery}
+              onChange={handleSearch}
+            />
+          </Form.Group>
+          <Table striped bordered hover className="table-scroll table-hover">
             <thead>
               <tr>
                 <th>Nama Barang</th>
@@ -79,112 +119,64 @@ const MyComponent = ({showModal,onHide}) => {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>Starter Motor</td>
-                <td>01-001-223-016</td>
-                <td>BOSCH</td>
-                <td>WELDING MILLER 400</td>
-                <td> 0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION</td>
-                <td>Location 1</td>
-                <td>Pcs</td>
-                <td>10</td>
-                <td>5000</td>
-                <td>10000</td>
-              </tr>
-              <tr>
-                <td>Starter Motor</td>
-                <td>01-001-223-016</td>
-                <td>BOSCH</td>
-                <td>WELDING MILLER 400</td>
-                <td> 0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION</td>
-                <td>Location 1</td>
-                <td>Pcs</td>
-                <td>10</td>
-                <td>5000</td>
-                <td>10000</td>
-              </tr>
-              <tr>
-                <td>Starter Motor</td>
-                <td>01-001-223-016</td>
-                <td>BOSCH</td>
-                <td>WELDING MILLER 400</td>
-                <td> 0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION</td>
-                <td>Location 1</td>
-                <td>Pcs</td>
-                <td>10</td>
-                <td>5000</td>
-                <td>10000</td>
-              </tr>
-              <tr>
-                <td>Starter Motor</td>
-                <td>01-001-223-016</td>
-                <td>BOSCH</td>
-                <td>WELDING MILLER 400</td>
-                <td> 0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION</td>
-                <td>Location 1</td>
-                <td>Pcs</td>
-                <td>10</td>
-                <td>5000</td>
-                <td>10000</td>
-              </tr>
-              <tr>
-                <td>Starter Motor</td>
-                <td>01-001-223-016</td>
-                <td>BOSCH</td>
-                <td>WELDING MILLER 400</td>
-                <td> 0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION</td>
-                <td>Location 1</td>
-                <td>Pcs</td>
-                <td>10</td>
-                <td>5000</td>
-                <td>10000</td>
-              </tr>
-              <tr>
-                <td>Starter Motor</td>
-                <td>01-001-223-016</td>
-                <td>BOSCH</td>
-                <td>WELDING MILLER 400</td>
-                <td> 0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION0118 2384 KZ - CW ROTATION</td>
-                <td>Location 1</td>
-                <td>Pcs</td>
-                <td>10</td>
-                <td>5000</td>
-                <td>10000</td>
-              </tr>
-              <tr>
-                <td>Oil Pressure</td>
-                <td>0-001</td>
-                <td>USA</td>
-                <td>GENSET</td>
-                <td>CINA / 0.100 PSI / 7 KG-CM</td>
-                <td>Location 2</td>
-                <td>Pcs</td>
-                <td>5</td>
-                <td>2000</td>
-                <td>4500</td>
-              </tr>
-              <tr>
-                <td>Regulator</td>
-                <td>0-33719-0031</td>
-                <td>TW</td>
-                <td>LU/ KOMATSU</td>
-                <td>KDO 33719-0031</td>
-                <td>Location 3</td>
-                <td>Pcs</td>
-                <td>20</td>
-                <td>1500</td>
-                <td>3000</td>
-              </tr>
+              {newProducts.map((row) => (
+                <tr
+                  key={row.id}
+                  onDoubleClick={() => handleRowDoubleClick(row)}
+                >
+                  <td>{row.name}</td>
+                  <td>{row.part_number}</td>
+                  <td>{row.product}</td>
+                  <td>{row.type}</td>
+                  <td>{row.replacement_code}</td>
+                  <td>{row.Storage?.storage_name}</td>
+                  <td>{row.Unit?.unit_code}</td>
+                  <td>{row.stock}</td>
+                  <td>{`Rp. ${row.cost.toLocaleString("id-ID")}`}</td>
+                  <td>{`Rp. ${row.sell_price.toLocaleString("id-ID")}`}</td>
+                </tr>
+              ))}
             </tbody>
           </Table>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={onHide}>
-            Close
-          </Button>
-          <Button variant="primary" onClick={handleSave}>
-            Save Changes
-          </Button>
+          {/* Pagination Controls */}
+          <Pagination>
+            <Pagination.Prev
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            />
+            {currentPage > Math.floor(maxPageButtons / 2) + 1 && (
+              <Pagination.Item onClick={() => handlePageChange(1)}>
+                1
+              </Pagination.Item>
+            )}
+            {currentPage > Math.floor(maxPageButtons / 2) + 2 && (
+              <Pagination.Ellipsis />
+            )}
+            {getPaginationItems().map((page) => (
+              <Pagination.Item
+                key={page}
+                active={page === currentPage}
+                onClick={() => handlePageChange(page)}
+                activeLabel=""
+              >
+                {page}
+              </Pagination.Item>
+            ))}
+            {currentPage < totalPages - Math.floor(maxPageButtons / 2) - 1 && (
+              <Pagination.Ellipsis />
+            )}
+            {currentPage < totalPages - Math.floor(maxPageButtons / 2) && (
+              <Pagination.Item onClick={() => handlePageChange(totalPages)}>
+                {totalPages}
+              </Pagination.Item>
+            )}
+            <Pagination.Next
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            />
+          </Pagination>
         </Modal.Footer>
       </Modal>
     </div>

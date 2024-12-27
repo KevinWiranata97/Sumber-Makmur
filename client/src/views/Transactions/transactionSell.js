@@ -14,15 +14,12 @@ import Select from "react-select";
 import MyComponent from "../../components/modal";
 
 const MyModal = ({ showModal, handleClose, data, fungsi }) => {
-
-  
   const [transaction_id, setTransactionId] = useState();
   const [customers, setCustomer] = useState([]);
   const [expeditions, setExpeditions] = useState([]);
   const [products, setProducts] = useState([]);
   const [rows, setRows] = useState([]);
-  // const [customerDisc, setCustomerDisc] = useState(0)
-  // const [customerName, setCustomerName] = useState()
+  const [modalData, setModalData] = useState();
 
   const [customerExpedition, setCustomerExpedition] = useState(0);
   const [currentTax, setCurrentTax] = useState(0);
@@ -40,7 +37,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
     transaction_discount: "",
   });
 
-  const [showProductModal, setShowProductModal] = useState(false)
+  const [showProductModal, setShowProductModal] = useState(false);
   useEffect(() => {
     fetchCustomers();
     fetchProducts();
@@ -531,22 +528,22 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
   }
 
   const handleAddRow = async () => {
-    const newProduct = {
-      id: Date.now(), // Unique identifier for the new row
-      Product: {
-        id: "",
-        part_number: "",
-        name: "",
-        unit_code: "",
-      },
-      qty: 1,
-      current_cost: 0,
-      isNew: true, // Mark the row as new
-    };
+    // const newProduct = {
+    //   id: Date.now(), // Unique identifier for the new row
+    //   Product: {
+    //     id: "",
+    //     part_number: "",
+    //     name: "",
+    //     unit_code: "",
+    //   },
+    //   qty: 1,
+    //   current_cost: 0,
+    //   isNew: true, // Mark the row as new
+    // };
 
-    // Add the new row locally
-    setRows([...rows, newProduct]);
-    setShowProductModal(true)
+    // // Add the new row locally
+    // setRows([...rows, newProduct]);
+    setShowProductModal(true);
   };
 
   const deleteRowLocally = (index) => {
@@ -557,7 +554,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
   // Handle updating the selected barang in the row
   const handleBarangChange = (index, option) => {
-    const selectedBarang = products.find((b) => b.id === option.value);
+    let selectedBarang = products.find((b) => b.id === option.value);
 
     const newRows = [...rows];
 
@@ -612,11 +609,41 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
     setShowProductModal(false);
   };
 
+  const handleDataFromModal = (data) => {
+    console.log("Data received from modal:", data.Unit.unit_code);
+
+    const newProduct = {
+      id: Date.now(), // Unique identifier for the new row
+      Product: {
+        id: data.id,
+        part_number: data.part_number,
+        name: data.name,
+        unit_code: data.Unit.unit_code,
+        cost: data.cost,
+      },
+      qty: 1,
+      current_cost: 0,
+      isNew: true, // Mark the row as new
+    };
+
+    // Add the new row locally
+    setRows([...rows, newProduct]);
+    setShowProductModal(false);
+  };
+
 
   return (
     <div className="container">
-      <MyComponent showModal={showProductModal} onHide={handleCloseProductModal}/>
-      <Modal show={showModal} onHide={handleClose} className={showProductModal ? "modal-hidden" : "custom-modal"}>
+      <MyComponent
+        showModal={showProductModal}
+        onHide={handleCloseProductModal}
+        onDataSubmit={handleDataFromModal}
+      />
+      <Modal
+        show={showModal}
+        onHide={handleClose}
+        className={showProductModal ? "modal-hidden" : "custom-modal"}
+      >
         <Modal.Header>
           <Modal.Title>
             {data ? "Penjualan Form" : "Penjualan Form"}
@@ -666,7 +693,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
           </div>
         </Modal.Header>
 
-        <Modal.Body>
+        <Modal.Body >
           <div className="container">
             {/* Form section */}
             <div className="form-section row g-3">
@@ -834,8 +861,8 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
               </div>
             </div>
 
-            <div className="table-container mt-3 ">
-              <table className="table-xl table-bordered table-striped">
+            <div className="table-container mt-3 scrollable-table">
+              <table className="table table-bordered table-striped table-scroll">
                 <thead>
                   <tr className="table-warning">
                     <th>No.</th>
@@ -859,42 +886,8 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                     rows.map((item, index) => (
                       <tr key={index}>
                         <td>{index + 1}</td>
-                        <td>
-                          {item.isNew ? (
-                            <Select
-                              value={item.Product.id || ""}
-                              onChange={(option) =>
-                                handleBarangChange(index, option)
-                              }
-                              options={products.map((barang) => ({
-                                value: barang.id,
-                                label: barang.part_number,
-                              }))}
-                              placeholder={
-                                item.Product.part_number || "Pilih Barang"
-                              }
-                            />
-                          ) : (
-                            item.Product.part_number
-                          )}
-                        </td>
-                        <td>
-                          {item.isNew ? (
-                            <Select
-                              value={item.Product.id || ""}
-                              onChange={(option) =>
-                                handleBarangChange(index, option)
-                              }
-                              options={products.map((barang) => ({
-                                value: barang.id,
-                                label: barang.name,
-                              }))}
-                              placeholder={item.Product.name || "Pilih Barang"}
-                            />
-                          ) : (
-                            item.Product.name
-                          )}
-                        </td>
+                        <td>{item.Product.part_number}</td>
+                        <td>{item.Product.name}</td>
 
                         <td>
                           {item.isNew ? (
@@ -918,7 +911,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                         <td>
                           {item.Product.Unit
                             ? item.Product.Unit.unit_code
-                            : "N/A"}
+                            : item.Product.unit_code}
                         </td>
 
                         <td>
@@ -970,7 +963,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                         </td>
                         <td>
                           {item.Product.cost
-                            ? `Rp. ${item.Product.cost.toLocaleString()}`
+                            ? `Rp. ${(item.qty* item.Product.cost).toLocaleString()}`
                             : "N/A"}
                         </td>
                         <td>
