@@ -57,13 +57,18 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
     stock: "",
   });
 
+
+  
   useEffect(() => {
     fetchUnit();
     fetchStorages();
-    fetchBuyHistory();
+    
     if (data) {
       setFormData(data);
       setId(data.id);
+      fetchBuyHistory(data.id);
+      fetchSellHistory(data.id)
+   
     } else {
       // Reset form data if data is empty
       setFormData({
@@ -80,6 +85,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
       });
     }
   }, [data]);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -168,8 +174,11 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
     }
   }
 
-  async function fetchBuyHistory() {
+  async function fetchBuyHistory(id) {
     try {
+
+    
+      
       const response = await axios({
         method: "GET",
         url: `${process.env.REACT_APP_API_URL}/products/buy-history/${id}`,
@@ -179,6 +188,22 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
       });
 
       setBuyHistory(response.data.data);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async function fetchSellHistory(id) {
+    try {
+      const response = await axios({
+        method: "GET",
+        url: `${process.env.REACT_APP_API_URL}/products/sell-history/${id}`,
+        headers: {
+          authorization: localStorage.getItem("authorization"),
+        },
+      });
+
+      setSellHistory(response.data.data);
     } catch (error) {
       console.log(error);
     }
@@ -261,7 +286,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                             <option
                               key={storage.id}
                               value={storage.id}
-                              selected={formData.storage_id === storage.id}
+                              defaultValue={formData.storage_id === storage.id}
                             >
                               {storage.storage_name}
                             </option>
@@ -271,7 +296,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
                             <option
                               key={unit.id}
                               value={unit.id}
-                              selected={formData.unit_id === unit.id}
+                              defaultValue={formData.unit_id === unit.id}
                             >
                               {unit.unit_code}
                             </option>
@@ -349,8 +374,47 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
           </div>
         ) : activeTab === "history-penjualan" ? (
           <div className="text-center">
-            <h5>History Penjualan Barang</h5>
-            {/* Add content for History Penjualan here */}
+            <Table
+              striped
+              bordered
+              hover
+              className="table-scroll table-hover mt-0"
+            >
+              <thead>
+                <tr>
+                  <th>No Bukti</th>
+                  <th>Tanggal</th>
+                  <th>Supplier</th>
+                  <th>Part Number</th>
+                  <th>Product</th>
+                  <th>Nama Barang</th>
+                  <th>Lokasi Id</th>
+                  <th>Qty</th>
+                  <th>Satuan Id</th>
+                  <th>Price</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sellHistory.map((row) => (
+                  <tr key={row.id}>
+                    <td>{row.Transaction.transaction_invoice_number}</td>
+                    <td>{row.Transaction.transaction_date}</td>
+                    <td>{row.Transaction.Customer.customer_name}</td>
+                    <td>{row.Product.part_number}</td>
+                    <td>{row.Product.product}</td>
+                    <td>{row.Product.name}</td>
+                    <td>{row.Product.Storage.storage_name}</td>
+                    <td>{row.qty}</td>
+                    <td>{row.Product.Unit.unit_code}</td>
+                    <td>{`Rp.${row.current_cost.toLocaleString()}`}</td>
+                    <td>{`Rp.${(
+                      row.qty * row.current_cost
+                    ).toLocaleString()}`}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
           </div>
         ) : (
           <div className="text-center">

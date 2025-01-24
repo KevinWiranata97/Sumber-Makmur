@@ -319,7 +319,10 @@ class Controller {
               transaction_type: "sell",
               status: true,
             },
-            attributes: ["transaction_invoice_number", "transaction_date"],
+            attributes: [
+              "transaction_invoice_number",
+              [Sequelize.literal(`TO_CHAR(transaction_date, 'DD/MM/YYYY')`), 'transaction_date']
+            ],
             include: [
               {
                 model: Customer,
@@ -329,7 +332,17 @@ class Controller {
           },
           {
             model: Product,
-            attributes: ["product", "name"],
+            attributes: ["product", "name","part_number","storage_id"],
+            include: [
+              {
+                model: Storage,
+                attributes: ["storage_name"],
+              },
+              {
+                model: Unit,
+                attributes: ["unit_code"],
+              },
+            ],
           },
         ],
       });
