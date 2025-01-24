@@ -24,6 +24,8 @@ export default function LoginViews() {
       });
 
 
+      console.log(response);
+      
   
       if (response.request.status === 200) {
         localStorage.setItem("authorization", response.data.authorization);

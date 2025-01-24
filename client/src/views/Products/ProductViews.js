@@ -5,14 +5,16 @@ import axios from "axios";
 import { useState, useEffect } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 import Swal from "sweetalert2";
-import { ThemeProvider } from '@mui/material/styles';
+import { ThemeProvider } from "@mui/material/styles";
 import theme from "../../components/theme";
 import SearchBar from "../../components/searchbar";
-
+import { Table } from "react-bootstrap";
 const MyModal = ({ showModal, handleClose, data, fungsi }) => {
   const [id, setId] = useState();
-  const [units, setUnits] = useState([])
-  const [storages, setStorages] = useState([])
+  const [units, setUnits] = useState([]);
+  const [storages, setStorages] = useState([]);
+  const [sellHistory, setSellHistory] = useState([]);
+  const [buyHistory, setBuyHistory] = useState([]);
   const columns = [
     { field: "name", headerName: "Nama Barang", flex: 2 },
     { field: "part_number", headerName: "Part Number", flex: 1 },
@@ -36,7 +38,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
   ];
 
   // State to track the current active tab
-  const [activeTab, setActiveTab] = useState('form'); // 'form' for form view, 'blank' for the blank view
+  const [activeTab, setActiveTab] = useState("form"); // 'form' for form view, 'blank' for the blank view
 
   // Function to toggle tab
   const handleTabClick = (tab) => {
@@ -52,12 +54,13 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
     unit_id: "",
     cost: "",
     sell_price: "",
-    stock: ""
+    stock: "",
   });
 
   useEffect(() => {
-    fetchUnit()
-    fetchStorages()
+    fetchUnit();
+    fetchStorages();
+    fetchBuyHistory();
     if (data) {
       setFormData(data);
       setId(data.id);
@@ -73,7 +76,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
         unit_id: "",
         cost: "",
         sell_price: "",
-        stock: ""
+        stock: "",
       });
     }
   }, [data]);
@@ -89,10 +92,9 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    let data = formData
+    let data = formData;
 
-
-    fungsi(data, id)
+    fungsi(data, id);
     handleClose(); // Close modal after form submission
   };
 
@@ -107,10 +109,10 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
       confirmButtonText: "Ya, hapus!",
     }).then((result) => {
       if (result.isConfirmed) {
-        deleteProduct(id)
+        deleteProduct(id);
         handleClose();
       }
-    })
+    });
   };
 
   async function deleteProduct(id) {
@@ -130,8 +132,7 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
         text: response.data.message,
       }).then((result) => {
         handleClose();
-      })
-
+      });
     } catch (error) {
       console.log(error);
     }
@@ -166,116 +167,198 @@ const MyModal = ({ showModal, handleClose, data, fungsi }) => {
       console.log(error);
     }
   }
+
+  async function fetchBuyHistory() {
+    try {
+      const response = await axios({
+        method: "GET",
+        url: `${process.env.REACT_APP_API_URL}/products/buy-history/${id}`,
+        headers: {
+          authorization: localStorage.getItem("authorization"),
+        },
+      });
+
+      setBuyHistory(response.data.data);
+    } catch (error) {
+      console.log(error);
+    }
+  }
   const closeModal = () => {
-    setActiveTab('form');  // Reset the active tab
-    handleClose();         // Call the original close handler
+    setActiveTab("form"); // Reset the active tab
+    handleClose(); // Call the original close handler
   };
-  
+
   return (
-    <Modal show={showModal} onHide={closeModal} size="xl">
-    <Modal.Header>
-      <div className="modal-tabs">
-        {/* First Tab */}
-        <span
-          className={`tab-title ${activeTab === 'form' ? 'active-tab' : ''}`}
-          onClick={() => handleTabClick('form')}
-        >
-          {data ? 'Edit Barang' : 'Tambah Barang'}
-        </span>
-
-        {/* Second Tab, only visible if data exists */}
-        {data && (
+    <Modal
+      show={showModal}
+      onHide={closeModal}
+      centered
+      size="xl"
+      className="product-modal"
+    >
+      <Modal.Header>
+        <div className="modal-tabs">
+          {/* First Tab */}
           <span
-            className={`tab-title ${activeTab === 'history-pembelian' ? 'active-tab' : ''}`}
-            onClick={() => handleTabClick('history-pembelian')}
+            className={`tab-title ${activeTab === "form" ? "active-tab" : ""}`}
+            onClick={() => handleTabClick("form")}
           >
-            History Pembelian Barang
+            {data ? "Edit Barang" : "Tambah Barang"}
           </span>
-        )}
 
-        {/* Third Tab for Penjualan Barang, also visible only if data exists */}
+          {/* Second Tab, only visible if data exists */}
+          {data && (
+            <span
+              className={`tab-title ${
+                activeTab === "history-pembelian" ? "active-tab" : ""
+              }`}
+              onClick={() => handleTabClick("history-pembelian")}
+            >
+              History Pembelian Barang
+            </span>
+          )}
+
+          {/* Third Tab for Penjualan Barang, also visible only if data exists */}
+          {data && (
+            <span
+              className={`tab-title ${
+                activeTab === "history-penjualan" ? "active-tab" : ""
+              }`}
+              onClick={() => handleTabClick("history-penjualan")}
+            >
+              History Penjualan Barang
+            </span>
+          )}
+        </div>
         {data && (
-          <span
-            className={`tab-title ${activeTab === 'history-penjualan' ? 'active-tab' : ''}`}
-            onClick={() => handleTabClick('history-penjualan')}
-          >
-            History Penjualan Barang
-          </span>
+          <button className="btn btn-link" onClick={handleDelete}>
+            <i className="fas fa-trash" style={{ color: "red" }}>
+              {" "}
+            </i>
+          </button>
         )}
-      </div>
-      {data && (
-        <button className="btn btn-link" onClick={handleDelete}>
-          <i className="fas fa-trash" style={{ color: 'red' }}> </i>
-        </button>
-      )}
-    </Modal.Header>
-    <Modal.Body>
-      {activeTab === 'form' ? (
-        <Form onSubmit={handleSubmit}>
-          <div className="row">
-            {columns.map((column) => (
-              <div className="col-6 mb-2" key={column.field}>
-                <Form.Group controlId={column.field}>
-                  <Form.Label>{column.headerName}</Form.Label>
-                  {column.field === 'storage_id' || column.field === 'unit_id' ? (
-                    <Form.Control
-                      as="select"
-                      name={column.field}
-                      value={formData[column.field]}
-                      onChange={handleChange}
-                      required
-                    >
-                      <option value="">{`Pilih ${column.headerName}`}</option>
-                      {column.field === 'storage_id' && storages.map((storage) => (
-                        <option key={storage.id} value={storage.id} selected={formData.storage_id === storage.id}>
-                          {storage.storage_name}
-                        </option>
-                      ))}
-                      {column.field === 'unit_id' && units.map((unit) => (
-                        <option key={unit.id} value={unit.id} selected={formData.unit_id === unit.id}>
-                          {unit.unit_code}
-                        </option>
-                      ))}
-                    </Form.Control>
-                  ) : (
-                    <Form.Control
-                      type="text"
-                      name={column.field}
-                      value={formData[column.field]}
-                      onChange={handleChange}
-                      required
-                    />
-                  )}
-                </Form.Group>
-              </div>
-            ))}
+      </Modal.Header>
+      <Modal.Body>
+        {activeTab === "form" ? (
+          <Form onSubmit={handleSubmit}>
+            <div className="row">
+              {columns.map((column) => (
+                <div className="col-6 mb-2" key={column.field}>
+                  <Form.Group controlId={column.field}>
+                    <Form.Label>{column.headerName}</Form.Label>
+                    {column.field === "storage_id" ||
+                    column.field === "unit_id" ? (
+                      <Form.Control
+                        as="select"
+                        name={column.field}
+                        value={formData[column.field]}
+                        onChange={handleChange}
+                        required
+                      >
+                        <option value="">{`Pilih ${column.headerName}`}</option>
+                        {column.field === "storage_id" &&
+                          storages.map((storage) => (
+                            <option
+                              key={storage.id}
+                              value={storage.id}
+                              selected={formData.storage_id === storage.id}
+                            >
+                              {storage.storage_name}
+                            </option>
+                          ))}
+                        {column.field === "unit_id" &&
+                          units.map((unit) => (
+                            <option
+                              key={unit.id}
+                              value={unit.id}
+                              selected={formData.unit_id === unit.id}
+                            >
+                              {unit.unit_code}
+                            </option>
+                          ))}
+                      </Form.Control>
+                    ) : (
+                      <Form.Control
+                        type="text"
+                        name={column.field}
+                        value={formData[column.field]}
+                        onChange={handleChange}
+                        required
+                      />
+                    )}
+                  </Form.Group>
+                </div>
+              ))}
+            </div>
+            <div className="text-right mb-3 mt-3">
+              <Button
+                variant="secondary"
+                className="mr-2"
+                onClick={handleClose}
+              >
+                Close
+              </Button>
+              <Button variant="primary" type="submit">
+                Save
+              </Button>
+            </div>
+          </Form>
+        ) : activeTab === "history-pembelian" ? (
+          <div>
+            <Table
+              striped
+              bordered
+              hover
+              className="table-scroll table-hover mt-0"
+            >
+              <thead>
+                <tr>
+                  <th>No Bukti</th>
+                  <th>Tanggal</th>
+                  <th>Supplier</th>
+                  <th>Part Number</th>
+                  <th>Product</th>
+                  <th>Nama Barang</th>
+                  <th>Lokasi Id</th>
+                  <th>Qty</th>
+                  <th>Satuan Id</th>
+                  <th>Price</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {buyHistory.map((row) => (
+                  <tr key={row.id}>
+                    <td>{row.Transaction.transaction_proof_number}</td>
+                    <td>{row.Transaction.transaction_date}</td>
+                    <td>{row.Transaction.Supplier.supplier_name}</td>
+                    <td>{row.Product.part_number}</td>
+                    <td>{row.Product.product}</td>
+                    <td>{row.Product.name}</td>
+                    <td>{row.Product.Storage.storage_name}</td>
+                    <td>{row.qty}</td>
+                    <td>{row.Product.Unit.unit_code}</td>
+                    <td>{`Rp.${row.current_cost.toLocaleString()}`}</td>
+                    <td>{`Rp.${(
+                      row.qty * row.current_cost
+                    ).toLocaleString()}`}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
           </div>
-          <div className="text-right mb-3 mt-3">
-            <Button variant="secondary" className="mr-2" onClick={handleClose}>
-              Close
-            </Button>
-            <Button variant="primary" type="submit">
-              Save
-            </Button>
+        ) : activeTab === "history-penjualan" ? (
+          <div className="text-center">
+            <h5>History Penjualan Barang</h5>
+            {/* Add content for History Penjualan here */}
           </div>
-        </Form>
-      ) : activeTab === 'history-pembelian' ? (
-        <div className="text-center">
-          <h5>History Pembelian Barang</h5>
-          {/* Add content for History Pembelian here */}
-        </div>
-      ) : activeTab === 'history-penjualan' ? (
-        <div className="text-center">
-          <h5>History Penjualan Barang</h5>
-          {/* Add content for History Penjualan here */}
-        </div>
-      ) : (
-        <div className="text-center">
-          <h5>{data ? 'Editing Blank Modal' : 'Adding Blank Modal'}</h5>
-        </div>
-      )}
-    </Modal.Body>
-  </Modal>
+        ) : (
+          <div className="text-center">
+            <h5>{data ? "Editing Blank Modal" : "Adding Blank Modal"}</h5>
+          </div>
+        )}
+      </Modal.Body>
+    </Modal>
   );
 };
 const Home = () => {
@@ -288,14 +371,13 @@ const Home = () => {
   const [showModal, setShowModal] = useState(false);
   const [productById, setProductById] = useState();
   const handleClose = () => {
-    setProductById(null)
-    fetchProducts()
+    setProductById(null);
+    fetchProducts();
     setShowModal(false);
-  }
+  };
   const handleShow = (productId) => {
-
-    if (productId === 'tambahBarang') {
-      setProductById(null)
+    if (productId === "tambahBarang") {
+      setProductById(null);
     } else {
       fetchProductsById(productId);
     }
@@ -322,26 +404,27 @@ const Home = () => {
   //   }
   // };
 
-
   const fetchProducts = async (value) => {
     setLoading(true);
     try {
-      const searchTerm = value || '';
+      const searchTerm = value || "";
 
       const response = await axios({
-        method: 'GET',
-        url: `${process.env.REACT_APP_API_URL}/products?search=${searchTerm}&limit=${pageSize}&page=${page+1}`,
+        method: "GET",
+        url: `${
+          process.env.REACT_APP_API_URL
+        }/products?search=${searchTerm}&limit=${pageSize}&page=${page + 1}`,
         headers: {
-          authorization: localStorage.getItem('authorization'),
+          authorization: localStorage.getItem("authorization"),
         },
       });
 
       // Update the rows and total row count based on the response
       setRows(response.data.data);
       setRowCount(Number(response.data.pagination.totalItems));
- // Total rows available
+      // Total rows available
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
     }
@@ -378,7 +461,7 @@ const Home = () => {
         title: "Save data",
         text: response.data.message,
       }).then(() => {
-        fetchProducts()
+        fetchProducts();
       });
     } catch (error) {
       console.log(error);
@@ -401,7 +484,7 @@ const Home = () => {
         title: "Save data",
         text: response.data.message,
       }).then(() => {
-        fetchProducts()
+        fetchProducts();
       });
     } catch (error) {
       console.log(error);
@@ -430,13 +513,13 @@ const Home = () => {
       field: "cost",
       headerName: "Cost",
       flex: 1,
-      valueGetter: (params) => `Rp. ${params.toLocaleString('id-ID')}`,
+      valueGetter: (params) => `Rp. ${params.toLocaleString("id-ID")}`,
     },
     {
       field: "sell_price",
       headerName: "Harga Jual",
       flex: 1,
-      valueGetter: (params) => `Rp. ${params.toLocaleString('id-ID')}`,
+      valueGetter: (params) => `Rp. ${params.toLocaleString("id-ID")}`,
     },
   ];
 
@@ -445,9 +528,6 @@ const Home = () => {
     fetchProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, pageSize]);
-
-
-
 
   return (
     <>
@@ -460,7 +540,10 @@ const Home = () => {
             {/* Remove Tambah Barang Button */}
 
             {/* Render SearchBar with the onAdd prop */}
-            <SearchBar fetchProducts={fetchProducts} onAdd={() => handleShow("tambahBarang")} />
+            <SearchBar
+              fetchProducts={fetchProducts}
+              onAdd={() => handleShow("tambahBarang")}
+            />
           </div>
         </section>
 
@@ -492,19 +575,17 @@ const Home = () => {
                         loading={loading} // Show loading indicator while fetching data
                         pagination // Enable pagination
                         sx={{
-                          '& .MuiDataGrid-row:hover': {
-                            backgroundColor: '#e0f7fa', // Customize hover background color
-                            cursor: 'pointer', // Change cursor on hover (optional)
+                          "& .MuiDataGrid-row:hover": {
+                            backgroundColor: "#e0f7fa", // Customize hover background color
+                            cursor: "pointer", // Change cursor on hover (optional)
                           },
-                          '& .MuiDataGrid-cell:hover': {
-                            color: '#00695c', // Customize hover text color in cells (optional)
+                          "& .MuiDataGrid-cell:hover": {
+                            color: "#00695c", // Customize hover text color in cells (optional)
                           },
                         }}
                       />
                     </ThemeProvider>
                   </div>
-
-
 
                   <div>
                     <MyModal

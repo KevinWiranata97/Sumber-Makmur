@@ -1,21 +1,27 @@
-const { Product, Storage, Unit, Transaction_Product, Transaction,Supplier,Customer } = require("../models");
-const { Op } = require('sequelize'); // Import Sequelize operators
+const {
+  Product,
+  Storage,
+  Unit,
+  Transaction_Product,
+  Transaction,
+  Supplier,
+  Customer,
+} = require("../models");
+const { Op, Sequelize } = require("sequelize"); // Import Sequelize operators
 class Controller {
-
-
   static async getProduct(req, res, next) {
     try {
       // Get search query from request, or use empty string as default
-      const searchQuery = req.query.search || '';
-  
+      const searchQuery = req.query.search || "";
+
       // Get limit and page from query parameters, default to 10 items per page and page 1
       // If limit is 0 or undefined, we assume "no limit"
       const limit = parseInt(req.query.limit) || 0; // 0 will mean "no limit"
       const page = parseInt(req.query.page) || 1;
-  
+
       // Calculate the offset (how many records to skip), only if limit is set
       const offset = limit > 0 ? (page - 1) * limit : 0;
-  
+
       // Query options
       const queryOptions = {
         where: {
@@ -61,12 +67,12 @@ class Controller {
                 }
               : null,
             {
-              '$Storage.storage_name$': {
+              "$Storage.storage_name$": {
                 [Op.iLike]: `%${searchQuery}%`, // Search in related Storage name
               },
             },
             {
-              '$Unit.unit_code$': {
+              "$Unit.unit_code$": {
                 [Op.iLike]: `%${searchQuery}%`, // Search in related Unit code
               },
             },
@@ -75,32 +81,34 @@ class Controller {
         include: [
           {
             model: Storage,
-            attributes: ['storage_name'],
+            attributes: ["storage_name"],
           },
           {
             model: Unit,
-            attributes: ['unit_code'],
+            attributes: ["unit_code"],
           },
         ],
-        order: [['id', 'ASC']], // Order the results by ID in ascending order
+        order: [["id", "ASC"]], // Order the results by ID in ascending order
       };
-  
+
       // Add pagination only if limit is greater than 0
       if (limit > 0) {
         queryOptions.limit = limit;
         queryOptions.offset = offset;
       }
-  
+
       // Fetch products with or without pagination
-      const { count, rows: products } = await Product.findAndCountAll(queryOptions);
-  
+      const { count, rows: products } = await Product.findAndCountAll(
+        queryOptions
+      );
+
       // Calculate total pages (only if limit > 0)
       const totalPages = limit > 0 ? Math.ceil(count / limit) : 1;
-  
+
       // Return paginated result with metadata
       res.status(200).json({
         error: false,
-        msg: 'Success',
+        msg: "Success",
         data: products,
         pagination: {
           totalItems: count,
@@ -113,7 +121,6 @@ class Controller {
       next(error);
     }
   }
-  
 
   static async createProduct(req, res, next) {
     try {
@@ -124,7 +131,7 @@ class Controller {
         type,
         replacement_code,
         storage_id,
-      
+
         stock,
         unit_id,
         cost,
@@ -139,7 +146,7 @@ class Controller {
         type,
         replacement_code,
         storage_id,
-      
+
         stock,
         unit_id,
         cost,
@@ -166,9 +173,7 @@ class Controller {
           id,
           status: true,
         },
-
       });
-
 
       if (!product) {
         throw {
@@ -282,7 +287,7 @@ class Controller {
     }
   }
 
-  static async getProductSellHistory(req,res,next){
+  static async getProductSellHistory(req, res, next) {
     try {
       const { id } = req.params;
       const productById = await Product.findOne({
@@ -299,40 +304,113 @@ class Controller {
         };
       }
 
-    const getTransactionProduct = await Transaction_Product.findAll({
-      where:{
-        product_id:id,
-        status:true
-      },
-      attributes:{
-        exclude:['createdAt','updatedAt']
-      },
-      include: [
-        {
-          model: Transaction,
-          where:{
-            transaction_type:"sell",
-            status:true
-          
+      const getTransactionProduct = await Transaction_Product.findAll({
+        where: {
+          product_id: id,
+          status: true,
+        },
+        attributes: {
+          exclude: ["createdAt", "updatedAt"],
+        },
+        include: [
+          {
+            model: Transaction,
+            where: {
+              transaction_type: "sell",
+              status: true,
+            },
+            attributes: ["transaction_invoice_number", "transaction_date"],
+            include: [
+              {
+                model: Customer,
+                attributes: ["customer_name"],
+              },
+            ],
           },
-          attributes:['transaction_invoice_number','transaction_date'],
-          include:[
-           {
-            model: Customer,
-            attributes:['customer_name']
-           }
-          ]
-        }
-      ],
-    })
+          {
+            model: Product,
+            attributes: ["product", "name"],
+          },
+        ],
+      });
 
-    res.status(200).json({
-      error: false,
-      msg: `success`,
-      data: getTransactionProduct,
-    });
+      res.status(200).json({
+        error: false,
+        msg: `success`,
+        data: getTransactionProduct,
+      });
     } catch (error) {
-      next(error)
+      next(error);
+    }
+  }
+
+  static async getProductBuyHistory(req, res, next) {
+    try {
+      const { id } = req.params;
+      const productById = await Product.findOne({
+        where: {
+          id,
+          status: true,
+        },
+      });
+      if (!productById) {
+        throw {
+          name: "not_found",
+          code: 404,
+          msg: "Product not found",
+        };
+      }
+
+      const getTransactionProduct = await Transaction_Product.findAll({
+        where: {
+          product_id: id,
+          status: true,
+        },
+        attributes: {
+          exclude: ["createdAt", "updatedAt"],
+        },
+        include: [
+          {
+            model: Transaction,
+            where: {
+              transaction_type: "buy",
+              status: true,
+            },
+            attributes: [
+              "transaction_proof_number",
+              [Sequelize.literal(`TO_CHAR(transaction_date, 'DD/MM/YYYY')`), 'transaction_date']
+            ],
+            include: [
+              {
+                model: Supplier,
+                attributes: ["supplier_name"],
+              },
+            ],
+          },
+          {
+            model: Product,
+            attributes: ["product", "name","part_number","storage_id"],
+            include: [
+              {
+                model: Storage,
+                attributes: ["storage_name"],
+              },
+              {
+                model: Unit,
+                attributes: ["unit_code"],
+              },
+            ],
+          },
+        ],
+      });
+
+      res.status(200).json({
+        error: false,
+        msg: `success`,
+        data: getTransactionProduct,
+      });
+    } catch (error) {
+      next(error);
     }
   }
 }
