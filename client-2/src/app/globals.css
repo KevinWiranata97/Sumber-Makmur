@@ -1,0 +1,33 @@
+/* Import Google font - Poppins */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap");
+
+/* Import Boxicons */
+@import url('https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css');
+
+* {
+  margin: 10;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+body {
+  min-height: 100vh;
+  background: #f2f6fa;
+}
+/* Pre css */
+.flex {
+  display: flex;
+  align-items: cender;
+}
+.nav_image {
+  display: flex;
+  min-width: 55px;
+  justify-content: center;
+}
+.nav_image img {
+  height: 35px;
+  width: 35px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+

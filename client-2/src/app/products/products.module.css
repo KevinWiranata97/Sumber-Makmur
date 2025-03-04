@@ -1,0 +1,38 @@
+.productsPage {
+  padding: 20px;
+  font-family: "Poppins", sans-serif;
+  display: flex;
+}
+
+.productsPage h1 {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.productsPage p {
+  font-size: 1rem;
+  color: #555;
+}
+
+.content {
+  flex-grow: 1;
+  margin-left: 270px; /* Adjust this value based on the sidebar width */
+  padding: 20px;
+  font-family: "Poppins", sans-serif;
+}
+
+.content h1 {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.content p {
+  font-size: 1rem;
+  color: #555;
+}
+
+.tableContainer {
+  width: 100%;
+  height: calc(100vh - 40px); /* Adjust based on your header/footer height */
+  overflow: auto;
+}
