@@ -2,15 +2,19 @@
 
 import React, { useState } from 'react';
 import styles from './login.module.css';
-import useStore from '../../store/useStore';
-
+import useStore from '../../store/useStore'
+import { useRouter } from 'next/navigation';
 const Login = () => {
   const { login, loginError } = useStore();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-
+  const router = useRouter();
   const handleLogin = async () => {
-    await login(username, password);
+    await login(username, password)
+
+    if (!loginError) {
+      router.push('/products');
+    }
   };
 
   return (

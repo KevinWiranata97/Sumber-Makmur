@@ -1,9 +1,12 @@
 import styles from "./Sidebar.module.css";
 import 'boxicons/css/boxicons.min.css';
-import useStore from '../store/useStore';
 
 export default function Sidebar() {
-  const { count, increaseCount, decreaseCount } = useStore();
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    window.location.href = '/login';
+  };
 
   return (
     <div>
@@ -71,7 +74,7 @@ export default function Sidebar() {
                 </a>
               </li>
               <li className={styles.item}>
-                <a href="#" className={`${styles.link} ${styles.flex}`}>
+                <a href="#" className={`${styles.link} ${styles.flex}`} onClick={handleLogout}>
                   <i className="bx bx-log-out" />
                   <span>Logout</span>
                 </a>

@@ -7,28 +7,43 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 
-const MUITable = () => {
+interface Column {
+  field: string;
+  headerName: string;
+  flex?: number;
+  valueGetter?: (params: any) => any;
+}
+
+interface MUITableProps {
+  columns: Column[];
+  data: Array<{ [key: string]: any }>;
+}
+
+const MUITable: React.FC<MUITableProps> = ({ columns, data }) => {
+  console.log('MUITable data:', data); // Log the data being passed to the component
+
   return (
     <TableContainer component={Paper}>
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell>Name</TableCell>
-            <TableCell>Age</TableCell>
-            <TableCell>City</TableCell>
+            {columns.map((column) => (
+              <TableCell key={column.field} style={{ flex: column.flex }}>
+                {column.headerName}
+              </TableCell>
+            ))}
           </TableRow>
         </TableHead>
         <TableBody>
-          <TableRow>
-            <TableCell>John Doe</TableCell>
-            <TableCell>30</TableCell>
-            <TableCell>New York</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>Jane Smith</TableCell>
-            <TableCell>25</TableCell>
-            <TableCell>Los Angeles</TableCell>
-          </TableRow>
+          {data.map((row, index) => (
+            <TableRow key={index}>
+              {columns.map((column) => (
+                <TableCell key={column.field}>
+                  {column.valueGetter ? column.valueGetter(row) : row[column.field]}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
     </TableContainer>
