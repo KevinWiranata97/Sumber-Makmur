@@ -9,15 +9,13 @@ import useStore from '../../store/useStore';
 
 const Products = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const { fetchProducts, products } = useStore();
+  const { fetchProducts, products, totalProducts } = useStore();
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
 
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
-
-  useEffect(() => {
-    console.log('Fetched products:', products); // Log the fetched products data
-  }, [products]);
+    fetchProducts(searchQuery, page, rowsPerPage);
+  }, [fetchProducts, searchQuery, page, rowsPerPage]);
 
   const columns = [
     { field: "name", headerName: "Nama Barang", flex: 2 },
@@ -60,7 +58,16 @@ const Products = () => {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    // Implement search logic here
+    setPage(0);
+  };
+
+  const handleChangePage = (event: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
   return (
@@ -69,7 +76,15 @@ const Products = () => {
       <div className={styles.content}>
         <SearchBar onSearch={handleSearch} />
         <div className={styles.tableContainer}>
-          <MUITable columns={columns} data={products} />
+          <MUITable
+            columns={columns}
+            data={products}
+            rowCount={totalProducts}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
         </div>
       </div>
     </div>

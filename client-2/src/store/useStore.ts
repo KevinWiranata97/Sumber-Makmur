@@ -7,13 +7,15 @@ interface AuthState {
   loginError: string | null;
   login: (username: string, password: string) => Promise<void>;
   products: any[];
-  fetchProducts: () => Promise<void>;
+  fetchProducts: (searchTerm: any, size: any, page: any) => Promise<void>;
+  totalProducts: number;
 }
 
 const useStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   loginError: null,
   products: [],
+  totalProducts: 0,
   login: async (username, password) => {
     try {
       const data = await loginService(username, password);
@@ -26,10 +28,11 @@ const useStore = create<AuthState>((set) => ({
       set({ loginError: (error as Error).message });
     }
   },
-  fetchProducts: async () => {
+  fetchProducts: async (searchTerm,page,size) => {
     try {
-      const data = await fetchProductsService();
+      const data = await fetchProductsService(searchTerm,size,page);
       set({ products: data.data });
+      set({ totalProducts: data.totalItems })
     } catch (error) {
       console.error('Failed to fetch products:', error);
     }

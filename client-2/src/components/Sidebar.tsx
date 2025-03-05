@@ -11,7 +11,16 @@ export default function Sidebar() {
   return (
     <div>
       <nav className={`${styles.sidebar} ${styles.locked}`}>
+
+        <div className={styles.nav_brand}>
+          <span >
+            <img className={styles.nav_logo} src="images/logo.jpg" alt="logo_img" width="250" />
+          </span>
+      
+        </div>
+
         <div className={styles.menu_container}>
+
           <div className={styles.menu_items}>
             <ul className={styles.menu_item}>
               <div className={`${styles.menu_title} ${styles.flex}`}>
@@ -79,7 +88,7 @@ export default function Sidebar() {
                   <span>Logout</span>
                 </a>
               </li>
-        
+
             </ul>
           </div>
         </div>

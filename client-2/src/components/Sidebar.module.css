@@ -4,7 +4,7 @@
 }
 .nav_image {
   display: flex;
-  min-width: 55px;
+  min-width: 40px;
   justify-content: center;
 }
 .nav_image img {
@@ -29,11 +29,9 @@
 .sidebar.close {
   width: calc(55px + 20px);
 }
-.logo_items {
-  gap: 8px;
-}
+
 .logo_name {
-  font-size: 22px;
+  font-size: 25px;
   color: #333;
   font-weight: 500px;
   transition: all 0.3s ease;
