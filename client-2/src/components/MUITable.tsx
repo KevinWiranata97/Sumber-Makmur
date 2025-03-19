@@ -52,7 +52,7 @@ const MUITable: React.FC<MUITableProps> = ({ columns, data, rowCount, page, rows
             {data.map((row, index) => (
               <TableRow key={index}>
                 {columns.map((column) => (
-                  <TableCell key={column.field}style={{ flex: column.flex, fontSize: '12px', fontWeight: 300 }}>
+                  <TableCell key={column.field}style={{ flex: column.flex, fontSize: '13px', fontWeight: 300 }}>
                     {column.valueGetter ? column.valueGetter(row) : row[column.field]}
                   </TableCell>
                 ))}

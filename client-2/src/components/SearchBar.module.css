@@ -1,5 +1,14 @@
 .searchBar {
   margin-bottom: 20px;
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  max-width: 500px;
+  width: 100%;
+  position: absolute;
+  top: 0;
+
+
 }
 
 .input {
@@ -8,4 +17,30 @@
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 16px;
+  flex: 1;
+  margin-right: 8px; /* Add some space between the input and the button */
+}
+
+
+
+.addButton {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px;
+  margin-left: 10px;
+  cursor: pointer;
+}
+.navbar {
+  max-width: 500px;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 60%;
+  transform: translateX(-50%);
+  background: #fff;
+  padding: 10px 20px;
+  border-radius: 0 0 8px 8px;
+  justify-content: space-between;
 }

@@ -16,8 +16,9 @@
 
 .content {
   flex-grow: 1;
-  margin-left: 270px; /* Adjust this value based on the sidebar width */
-  padding: 20px;
+  margin-left: 250px; /* Adjust this value based on the sidebar width */
+  padding: 25px;
+  ;
   font-family: "Poppins", sans-serif;
 }
 

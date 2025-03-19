@@ -1,0 +1,140 @@
+.container {
+  padding: 20px;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+.form-wrapper {
+  width: 100%;
+
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.tabs button {
+  background: #e5e7eb;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.tabs .active {
+  background: RGB(61, 68, 143);
+  color: white;
+}
+
+.header {
+  background:RGB(61, 68, 143);
+  color: white;
+  padding: 10px;
+  border-radius: 6px 6px 0 0;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  padding: 20px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-field label {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 5px;
+}
+
+.form-field input {
+  border: 1px solid #d1d5db;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.form-field select {
+  border: 1px solid #d1d5db;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  color: #374151;
+}
+
+.modal-header {
+    background: RGB(61, 68, 143);
+    color: white;
+    padding: 12px 20px;
+    font-size: 18px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 6px 6px 0 0;
+    position: absolute;
+    top: 0;
+    width: 85%;
+    margin-left: 10px;
+    margin-top: 10px;
+  
+  }
+  
+  .modal-title {
+    flex: 1;
+    text-align: center;
+  }
+  
+  .close-button {
+    cursor: pointer;
+    font-size: 20px;
+  }
+
+.form-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px;
+}
+
+.submit-button {
+  background: RGB(61, 68, 143);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.submit-button:hover {
+  background: RGB(50, 55, 120);
+}
+
+.Toastify__toast {
+  font-size: 19px; /* Increase font size */
+  padding: 20px; /* Add padding for a larger appearance */
+}
+
+.Toastify__toast--error {
+  background-color: #f44336; /* Custom error background color */
+}
+
+.Toastify__toast--success {
+  background-color: RGB(50, 55, 120); /* Custom success background color */
+}
+
