@@ -1,44 +1,32 @@
 import React, { useState } from 'react';
 import styles from './SearchBar.module.css';
-import SellingLeadsForm from './form';
 
-const SearchBar = ({ onSearch, onToggleForm, columns, data, page }: { onSearch: (query: string) => void, onToggleForm: (showForm: boolean) => void, columns: any[], data: any, page: string }) => {
+const SearchBar = ({ onSearch, onToggleForm, page, hidden }: { onSearch: (query: string) => void, onToggleForm: (showForm: boolean) => void, page: string, hidden?: boolean }) => {
   const [query, setQuery] = useState('');
-  const [showForm, setShowForm] = useState(false);
 
-  console.log(page,"pemaiiiiiiii");
-  
+  if (hidden) return null;
+
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(event.target.value);
     onSearch(event.target.value);
   };
 
   const handleButtonClick = () => {
-    const newShowForm = !showForm;
-    setShowForm(newShowForm);
-    onToggleForm(newShowForm);
-  };
-
-  const handleCloseForm = () => {
-    setShowForm(false);
-    onToggleForm(false);
+    onToggleForm(true); // Notify parent to show the form
   };
 
   return (
-    <div>
-      {!showForm && (
-        <div className={styles.searchBar}>
-          <input
-            type="text"
-            value={query}
-            onChange={handleInputChange}
-            placeholder="Search..."
-            className={styles.input}
-          />
-          <button onClick={handleButtonClick} className={styles.addButton}>{page === "/products" ? "Add Product" : "Add Lead"}</button>
-        </div>
-      )}
-      {showForm && <SellingLeadsForm onClose={handleCloseForm} columns={columns} data={data} page={page} />}
+    <div className={styles.searchBar}>
+      <input
+        type="text"
+        value={query}
+        onChange={handleInputChange}
+        placeholder="Search..."
+        className={styles.input}
+      />
+      <button onClick={handleButtonClick} className={styles.addButton}>
+        {page === "/products" ? "Add Product" : "Add Lead"}
+      </button>
     </div>
   );
 };

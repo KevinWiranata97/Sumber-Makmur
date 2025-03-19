@@ -31,9 +31,10 @@ interface MUITableProps {
   rowsPerPage: number;
   onPageChange: (event: unknown, newPage: number) => void;
   onRowsPerPageChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onRowClick?: (row: { [key: string]: any }) => void; // Add onRowClick prop
 }
 
-const MUITable: React.FC<MUITableProps> = ({ columns, data, rowCount, page, rowsPerPage, onPageChange, onRowsPerPageChange }) => {
+const MUITable: React.FC<MUITableProps> = ({ columns, data, rowCount, page, rowsPerPage, onPageChange, onRowsPerPageChange, onRowClick }) => {
 
   return (
     <ThemeProvider theme={theme}>
@@ -48,9 +49,9 @@ const MUITable: React.FC<MUITableProps> = ({ columns, data, rowCount, page, rows
               ))}
             </TableRow>
           </TableHead>
-          <TableBody >
+          <TableBody>
             {data.map((row, index) => (
-              <TableRow key={index}>
+              <TableRow key={index} onClick={() => onRowClick && onRowClick(row)} style={{ cursor: 'pointer' }}>
                 {columns.map((column) => (
                   <TableCell key={column.field}style={{ flex: column.flex, fontSize: '13px', fontWeight: 300 }}>
                     {column.valueGetter ? column.valueGetter(row) : row[column.field]}

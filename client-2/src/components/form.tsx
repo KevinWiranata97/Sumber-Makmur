@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import "./form.css";
-import { addProduct as addProductApi } from "../services/apiServices";
+import { addProduct as addProductApi, editProduct, deleteProduct } from "../services/apiServices"; // Import deleteProduct API
 import useStore from "../store/useStore";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Bounce } from "react-toastify";
+import 'boxicons'; // Import BoxIcons
 
-const SellingLeadsForm = ({ onClose, columns, data, page }: { onClose: () => void, columns: any[], data: any, page: string }) => {
+const SellingLeadsForm = ({ onClose, columns, data, page, onSuccess }: { onClose: () => void, columns: any[], data: any, page: string, onSuccess: () => void }) => {
   const [formData, setFormData] = useState({
     ...data,
     stock: data.stock || 0, // Set default value of 0 for stock
@@ -39,37 +40,93 @@ const SellingLeadsForm = ({ onClose, columns, data, page }: { onClose: () => voi
       return;
     }
 
-    if (isProductPage) {
-      try {
-        const payload = {
-          ...formData,
-          stock:formData.stock,
-          storage_id: formData.Storage,
-          unit_id: formData.Unit,
-        };
-        delete payload.Storage;
-        delete payload.Unit;
+    const payload = {
+      ...formData,
+      stock: formData.stock,
+      storage_id: formData.Storage, // Use storage_id for API
+      unit_id: formData.Unit, // Use unit_id for API
+    };
+    delete payload.Storage;
+    delete payload.Unit;
 
-        const response = await addProductApi(payload);
+    try {
+      if (data.id) {
+        // Edit product if ID exists
+        await editProduct(data.id, payload);
+        toast.success("Produk berhasil diperbarui!"); // Success notification
+      } else {
+        // Add product if no ID
+        await addProductApi(payload);
         toast.success("Produk berhasil ditambahkan!"); // Success notification
-        console.log(response);
-
-        // Delay closing the form to allow the toast to display
-        setTimeout(() => {
-          onClose();
-        }, 2000); // Adjust the delay to match the toast's autoClose duration
-      } catch (error) {
-        toast.error("Terjadi kesalahan saat menambahkan produk."); // Error notification
-        console.error("Error submitting product:", error);
       }
-    } else {
-      console.log("Form submitted for non-product page");
+
+      // Trigger the onSuccess callback to refresh the table
+      onSuccess();
 
       // Delay closing the form to allow the toast to display
       setTimeout(() => {
         onClose();
-      }, 2000); // Adjust the delay to match the toast's autoClose duration
+      }, 1000); // Adjust the delay to match the toast's autoClose duration
+    } catch (error) {
+      toast.error("Terjadi kesalahan saat memproses produk."); // Error notification
+      console.error("Error submitting product:", error);
     }
+  };
+
+  const handleDelete = async () => {
+    toast(
+      <div>
+        <p>Apakah Anda yakin ingin menghapus produk ini?</p>
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: "10px" }}>
+          <button
+            style={{
+              backgroundColor: "red",
+              color: "white",
+              padding: "5px 10px",
+              border: "none",
+              cursor: "pointer",
+              borderRadius: "8px", // Rounded corners
+              fontFamily: "Poppins, sans-serif", // Use Poppins font
+            }}
+            onClick={async () => {
+              try {
+                toast.dismiss(); // Dismiss the confirmation toast first
+                await deleteProduct(data.id); // Call delete API
+                toast.success("Produk berhasil dihapus!", { autoClose: 1000 }); // Show success notification for 1 second
+                setTimeout(() => {
+                  onSuccess(); // Refresh the table
+                  onClose(); // Close the form
+                }, 1000); // Delay other actions by 1 second
+              } catch (error) {
+                toast.error("Terjadi kesalahan saat menghapus produk."); // Error notification
+                console.error("Error deleting product:", error);
+              }
+            }}
+          >
+            Hapus
+          </button>
+          <button
+            style={{
+              backgroundColor: "gray",
+              color: "white",
+              padding: "5px 10px",
+              border: "none",
+              cursor: "pointer",
+              borderRadius: "8px", // Rounded corners
+              fontFamily: "Poppins, sans-serif", // Use Poppins font
+            }}
+            onClick={() => toast.dismiss()} // Dismiss the confirmation toast
+          >
+            Batal
+          </button>
+        </div>
+      </div>,
+      {
+        autoClose: false, // Disable auto-close for confirmation
+        closeOnClick: false, // Prevent closing on click outside
+        draggable: false, // Disable dragging
+      }
+    );
   };
 
   return (
@@ -91,7 +148,13 @@ const SellingLeadsForm = ({ onClose, columns, data, page }: { onClose: () => voi
             </div>
             <div className="header">
               <span>{isProductPage ? "Tambah Barang" : "Leads Detail"}:</span>
-              <span>▼</span>
+              {data.id && (
+                <i
+                  className="bx bx-trash"
+                  style={{ color: "white", fontSize: "24px", cursor: "pointer" }}
+                  onClick={handleDelete} // Trigger delete confirmation
+                ></i>
+              )}
             </div>
             <div className="form-grid">
               {columns
@@ -101,8 +164,8 @@ const SellingLeadsForm = ({ onClose, columns, data, page }: { onClose: () => voi
                     <label>{column.headerName}</label>
                     {column.field === "Storage" ? (
                       <select
-                        value={formData[column.field] || ''}
-                        onChange={(e) => handleInputChange(column.field, e.target.value)}
+                        value={formData.Storage || ''} // Bind to Storage
+                        onChange={(e) => handleInputChange("Storage", e.target.value)} // Update Storage
                       >
                         <option value="">Select Storage</option>
                         {storages.map((storage: any) => (
@@ -113,8 +176,8 @@ const SellingLeadsForm = ({ onClose, columns, data, page }: { onClose: () => voi
                       </select>
                     ) : column.field === "Unit" ? (
                       <select
-                        value={formData[column.field] || ''}
-                        onChange={(e) => handleInputChange(column.field, e.target.value)}
+                        value={formData.Unit || ''} // Bind to Unit
+                        onChange={(e) => handleInputChange("Unit", e.target.value)} // Update Unit
                       >
                         <option value="">Select Unit</option>
                         {units.map((unit: any) => (

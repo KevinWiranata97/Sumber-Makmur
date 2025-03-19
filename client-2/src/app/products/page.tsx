@@ -8,6 +8,7 @@ import MUITable from '../../components/MUITable';
 import SearchBar from '../../components/SearchBar';
 import useStore from '../../store/useStore';
 import SellingLeadsForm from '../../components/form';
+import { fetchProductById } from '../../services/apiServices';
 
 const Products = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -80,13 +81,43 @@ const Products = () => {
 
   const handleToggleForm = (showForm: boolean) => {
     setShowForm(showForm);
+    if (!showForm) setSelectedProduct(null); // Clear selected product when closing the form
+  };
+
+  const handleRowClick = async (row: { [key: string]: any }) => {
+    try {
+      const productDetails = await fetchProductById(row.id); // Fetch product details by ID
+
+      const productData = productDetails.data;
+
+      // Map unit_id and storage_id to Unit and Storage fields
+      const mappedProduct = {
+        ...productData,
+        Unit: productData.unit_id,
+        Storage: productData.storage_id,
+      };
+
+      setSelectedProduct(mappedProduct); // Set the mapped product details
+      setShowForm(true); // Show the form with details
+    } catch (error) {
+      console.error("Error fetching product details:", error);
+    }
+  };
+
+  const handleFormSuccess = () => {
+    fetchProducts(searchQuery, page, rowsPerPage); // Refresh the product list
   };
 
   return (
     <div className={styles.productsPage}>
       <Sidebar />
       <div className={styles.content}>
-        <SearchBar onSearch={handleSearch} onToggleForm={handleToggleForm} columns={columns} data={products} page={currentUrl} />
+        <SearchBar
+          onSearch={handleSearch}
+          onToggleForm={handleToggleForm} // Delegate form toggling to parent
+          page={currentUrl}
+          hidden={showForm} // Pass hidden prop to hide SearchBar
+        />
         {!showForm && (
           <div className={styles.tableContainer}>
             <MUITable
@@ -97,11 +128,18 @@ const Products = () => {
               rowsPerPage={rowsPerPage}
               onPageChange={handleChangePage}
               onRowsPerPageChange={handleChangeRowsPerPage}
+              onRowClick={handleRowClick} // Pass the row click handler
             />
           </div>
         )}
-        {showForm && selectedProduct && (
-          <SellingLeadsForm onClose={() => setShowForm(false)} columns={columns} data={selectedProduct} page={currentUrl} />
+        {showForm && (
+          <SellingLeadsForm
+            onClose={() => handleToggleForm(false)} // Close the form
+            columns={columns}
+            data={selectedProduct || {}} // Pass empty data for unpopulated form
+            page={currentUrl}
+            onSuccess={handleFormSuccess} // Refresh the table on success
+          />
         )}
       </div>
     </div>
